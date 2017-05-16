@@ -1,8 +1,15 @@
 ﻿#define __SUPERSONIC_C_
 #include "includes.h"
+#include "math.h"
 int sign=0;
 int sign_left=0;
 int sign_right=0;
+int get_ss=1;
+int sssum = 0; 
+int sscount=0;
+char value_buf[21];  
+int sscount,ssi,ssj,sstemp,ssr=0,sssumr=0,ssnsigma=0,sssigma=0,ssaverage=0; 
+int ssvalue=0;
 extern int zhangai;
 
 //**********************超声0***************************
@@ -247,14 +254,14 @@ void get_supersonic_time_3(void)
 }
 
 
-#if 1
+#if 0
 void supersonic(void)
 {
  	trigger_supersonic_0();
     get_supersonic_time_0();
     trigger_supersonic_2();
     get_supersonic_time_2();
-    if(((WORD)(tmp_time.R)/100)>0&&((WORD)(tmp_time.R)/100)<220 && ((WORD)(tmp_time2.R)/100)<(WORD)(tmp_time.R)/100)
+    if(((WORD)(tmp_time.R)/100)>0&&((WORD)(tmp_time.R)/100)<150 && ((WORD)(tmp_time2.R)/100)<(WORD)(tmp_time.R)/100)
     {
     	sign_left++;
     	trigger_supersonic_0();
@@ -264,7 +271,7 @@ void supersonic(void)
     	LCD_Write_Num(96,6,((WORD)(tmp_time.R)/100),5);
     	LCD_Write_Num(96,7,((WORD)(tmp_time2.R)/100),5);
     }
-    else if(((WORD)(tmp_time2.R)/100)>0&&((WORD)(tmp_time2.R)/100)<220 && ((WORD)(tmp_time.R)/100)<(WORD)(tmp_time2.R)/100)
+    else if(((WORD)(tmp_time2.R)/100)>0&&((WORD)(tmp_time2.R)/100)<150 && ((WORD)(tmp_time.R)/100)<(WORD)(tmp_time2.R)/100)
     {
     	sign_right++;
     	trigger_supersonic_0();
@@ -274,7 +281,7 @@ void supersonic(void)
     	LCD_Write_Num(96,6,((WORD)(tmp_time.R)/100),5);
     	LCD_Write_Num(96,7,((WORD)(tmp_time2.R)/100),5);    
     }
-    else if(((WORD)(tmp_time.R)/100)>220&&((WORD)(tmp_time2.R)/100)>220)
+    else if(((WORD)(tmp_time.R)/100)>150&&((WORD)(tmp_time2.R)/100)>150)
     {
     	sign_left=0;
     	sign_right=0;
@@ -285,66 +292,85 @@ void supersonic(void)
     	LCD_Write_Num(96,6,((WORD)(tmp_time.R)/100),5);
     	LCD_Write_Num(96,7,((WORD)(tmp_time2.R)/100),5);
     }
-#if 1
-
-   if(sign_left>=10)
+   if(sign_left==10)
    {
 	   sign_left=0;
 	   sign_right=0;
-	   set_steer_helm_basement(data_steer_helm_basement.right_limit);
+	   get_ss=1;
+	   set_steer_helm_basement((data_steer_helm_basement.right_limit-data_steer_helm_basement.center)*(220-((WORD)(tmp_time.R)/100)/220+data_steer_helm_basement.center));
 	   delay_ms(500);
 	   set_steer_helm_basement(data_steer_helm_basement.center);
     }
-   if(sign_right>=10)
+   if(sign_right==10)
       {
    	   sign_left=0;
    	   sign_right=0;
-   	   set_steer_helm_basement(data_steer_helm_basement.left_limit);
+   	   get_ss=1;
+   	   set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.left_limit)*(220-((WORD)(tmp_time2.R)/100)/220));
    	   delay_ms(500);
    	   set_steer_helm_basement(data_steer_helm_basement.center);
        }
-#endif
-#if 0
-   while(sign>=10)
- 	{
- 		trigger_supersonic_0();
- 		get_supersonic_time_0();
- 		trigger_supersonic_2();
- 		get_supersonic_time_2();
- 		LCD_Write_Num(96,6,((WORD)(tmp_time.R)/100),5);
- 		LCD_Write_Num(96,7,((WORD)(tmp_time2.R)/100),5);
- 		set_speed_pwm(0);
- 		if(((WORD)(tmp_time.R)/100)>320 && ((WORD)(tmp_time2.R)/100)>320)
- 			sign=0;
- 	}
-#endif
 }
 #endif
-#if 0
+#if 1
 void supersonic(void)
 {
- 	trigger_supersonic_0();
-    get_supersonic_time_0();
-    if(((WORD)(tmp_time.R)/100)<150&&((WORD)(tmp_time.R)/100)>10)
+   sssum=0;
+   sssumr=0;
+   ssr=0;
+   for (sscount=0;sscount<20;sscount++)  
+   {  
+      trigger_supersonic_0();
+      get_supersonic_time_0();
+      sssum+= (WORD)(tmp_time.R)/100 ;        
+   } 
+   
+ 
+//   for (sscount=0;sscount<21;sscount++)  
+//   {  
+//	   trigger_supersonic_0();
+//	   get_supersonic_time_0();
+//	   value_buf[sscount] =(WORD)(tmp_time.R)/100 ; 
+//	   sssum+= value_buf[sscount];
+//   } 
+//   ssaverage=sssum/21;
+//   for (ssi=0;ssi<21;ssi++)  
+//   {  
+//      ssnsigma+=(value_buf[ssi]-ssaverage)*(value_buf[ssi]-ssaverage);
+//   }
+//   sssigma=sqrt(ssnsigma/21);
+//   for(ssi=0;ssi<21;ssi++) 
+//   {
+//	   if(value_buf[ssi]-ssaverage<=3*sssigma)
+//	   {
+//		   sssumr+= value_buf[ssi];
+//		   ssr++;
+//	   }	   
+//   }   
+   ssvalue=sssum/20;
+    if(ssvalue<170&&ssvalue>10)
     {
     	sign++;
-    	trigger_supersonic_0();
-    	get_supersonic_time_0();
-    	LCD_Write_Num(96,6,((WORD)(tmp_time.R)/100),5);
+//    	trigger_supersonic_0();
+//    	get_supersonic_time_0();
+    	LCD_Write_Num(96,6,(WORD)(ssvalue),5);
     }
-    else if(((WORD)(tmp_time.R)/100)>150)
+    else if(ssvalue>220)
     {
     	sign=0;
-    	trigger_supersonic_0();
-    	get_supersonic_time_0();
-    	LCD_Write_Num(96,6,((WORD)(tmp_time.R)/100),5);
+//    	trigger_supersonic_0();
+//    	get_supersonic_time_0();
+    	set_steer_helm_basement(data_steer_helm_basement.center);
+    	LCD_Write_Num(96,6,(WORD)(ssvalue),5);
     }
+    
  	if(sign>=10)
  	{
- 		sign=0;
+ 		sign=0; 		
  		set_steer_helm_basement(data_steer_helm_basement.right_limit);
- 		delay_ms(500);
- 		set_steer_helm_basement(data_steer_helm_basement.center);
+ 		get_ss=1;
+        //delay_ms(500);
+ 		//set_steer_helm_basement(data_steer_helm_basement.center);
  	}
 }
 #endif

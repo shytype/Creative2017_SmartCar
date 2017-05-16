@@ -39,6 +39,7 @@ int target_lost=0;
 int message_received=0;
 int target_access=0;
 int target_near=0;
+extern get_ss;
 short high8;
 short low8;
 short high9;
@@ -481,7 +482,7 @@ void Wifi_Ctrl()
 			{
 				car_turn_around=1;
 			}
-			if(remote_frame_data[8]<0x05)
+			if(remote_frame_data[8]<0x02)
 			{
 				target_near=1;
 			}

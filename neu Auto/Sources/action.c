@@ -985,12 +985,13 @@ void control_car_action(void)
         {
         	uturn=0;
         	Car_UTurn();
-        	set_steer_helm_basement((data_steer_helm_basement.right_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center+100);
-        	set_speed_pwm(dasspeed);
+        	
         }
         if(target_access)
         {
         	target_access=0;
+        	set_steer_helm_basement((data_steer_helm_basement.right_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center+100);
+        	set_speed_pwm(dasspeed);
         }
         if(message_received==1)
         {

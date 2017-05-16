@@ -26,6 +26,7 @@ extern int Hold_a;
 extern int Hold_b;
 extern int right_turn;
 extern int target_near;
+extern get_ss;
 
 void Mode0_DebugCamera(void);
 void Mode1_SendVideo(void);
@@ -75,12 +76,17 @@ void Mode0_DebugCamera(void)
 			g_remote_frame_state = REMOTE_FRAME_STATE_NOK;
 			Wifi_Ctrl();
 		}
-		if(!target_near)//在距离小于5的时候不进超声
+//		if(!target_near)//在距离小于5的时候不进超声
+//		{
+//		
+		supersonic();
+//		}
+		if(!get_ss)
 		{
-			supersonic();
+			
+			control_car_action();			// 全场动作控制
 		}
-		
-		control_car_action();			// 全场动作控制
+		get_ss=0;
 //		EMIOS_0.CH[3].CSR.B.FLAG = 1;
 //		EMIOS_0.CH[3].CCR.B.FEN=1;
 //		if(WIFICHEKER==1 && Car_Psg==1)            // 有一个时间间隔为了 保证在没有收到的时候不会发疯一样发
