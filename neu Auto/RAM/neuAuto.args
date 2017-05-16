@@ -1,0 +1,54 @@
+"./Project_Settings/Startup_Code/__ppc_eabi_init_c.obj"
+"./Project_Settings/Startup_Code/MPC5604B_init_ram_c.obj"
+"./Project_Settings/Startup_Code/MPC5604B_Startup_c.obj"
+"./Project_Settings/Startup_Code/MPC5604B_HWInit_c.obj"
+"./Sources/video_c.obj"
+"./Sources/time_c.obj"
+"./Sources/supersonic_c.obj"
+"./Sources/sdcard_c.obj"
+"./Sources/main_c.obj"
+"./Sources/mag_c.obj"
+"./Sources/lcd_c.obj"
+"./Sources/ivor_branch_table_c.obj"
+"./Sources/init_c.obj"
+"./Sources/ff_c.obj"
+"./Sources/drifting_c.obj"
+"./Sources/diskio_c.obj"
+"./Sources/control_c.obj"
+"./Sources/camcontrol_c.obj"
+"./Sources/analyse_c.obj"
+"./Sources/action_c.obj"
+"./Sources/WiFi_c.obj"
+"./Sources/UART_c.obj"
+"./Sources/RFIDCard_c.obj"
+"./Sources/L3G4200D_c.obj"
+"./Sources/IntcInterrupts_c.obj"
+"./Sources/Exceptions_c.obj"
+-sym dwarf-2
+-sym full
+-msgstyle parseable
+-proc zen
+-big
+-fp soft
+-model absolute
+-abi eabi
+-sdata 8
+-sdata2 8
+-nostdlib
+-lcf
+"$(ProjDirPath)/Project_Settings/Linker_Files/MPC5604B_RAM.lcf"
+-m __startup
+-L"$(MCUToolsBaseDirEnv)/PA_Support/ewl/lib"
+-char unsigned
+-application
+-heapsize 32
+-stacksize 32
+-map
+-listclosure
+-mapunused
+-genbinary none
+-srec
+-sreclength 26
+-sreceol dos 
+-l"$(MCUToolsBaseDirEnv)/PA_Support/ewl/lib/libc_E200z0_VLE_Soft.a"
+-l"$(MCUToolsBaseDirEnv)/PA_Support/ewl/lib/librt_E200z0_VLE_Soft.a"
