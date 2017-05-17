@@ -39,12 +39,17 @@ int target_lost=0;
 int message_received=0;
 int target_access=0;
 int target_near=0;
+int barrier_left_detected=0;
+int barrier_right_detected=0;
+int stuck=0;
+int barrier_offset=0;
 extern get_ss;
 short high8;
 short low8;
 short high9;
 short low9;
 short steer_rate=0;
+short angle_rate=0;
 short speed_number=500;
 /*-----------------------------------------------------------------------*/
 /* 执行远程命令                                                          */
@@ -130,7 +135,16 @@ void execute_remote_cmd(const BYTE *data)
 		break;
 	}
 }
-
+int change_hex_into_dec(BYTE rev)
+{
+	int o=rev;
+	if(rev>0x7F)
+	{
+		o=o-256;
+		
+	}
+	return o;
+}
 /*-----------------------------------------------------------------------*/
 /* 接受远程数据帧                                                        */
 /* 第二版                                                                */
@@ -410,46 +424,49 @@ void Wifi_Ctrl()
 {
 	if(remote_frame_data[2]==0x55)//来自dby的电脑
 	{
-		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x66)//右转
+//		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x66)//右转
+//		{
+//			right_turn=1;
+//			high8=((WORD)(remote_frame_data[7])<<8);
+//			low8=(WORD)(remote_frame_data[8]);
+//			steer_rate=(high8|low8);
+//		}
+//		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x77)//直走
+//		{
+//			straight_drive=1;
+//		}
+//		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x00)//停车
+//		{
+//			car_stop=1;
+//		}
+//		
+//		if(remote_frame_data[5]==0x00&&remote_frame_data[6]==0x33)//倒车_李秋键
+//		{
+//			car_go_back=1;
+//		}
+//		if(remote_frame_data[5]==0x00&&remote_frame_data[6]==0x99)//调头_李秋键
+//		{
+//			car_turn_around=1;
+//		}
+//		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x55)//左转
+//		{
+//			left_turn=1;
+//			high8=((WORD)(remote_frame_data[7])<<8);
+//			low8=(WORD)(remote_frame_data[8]);
+//			steer_rate=(high8|low8);	
+//		}
+//		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x88)//变速
+//		{
+//			speed_change=1;
+//			high9=((WORD)(remote_frame_data[7])<<8);
+//			low9=(WORD)(remote_frame_data[8]);
+//			speed_number=(high9|low9);
+//		}
+		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x11)//给角度zhaodeng
 		{
-			right_turn=1;
-			high8=((WORD)(remote_frame_data[7])<<8);
-			low8=(WORD)(remote_frame_data[8]);
-			steer_rate=(high8|low8);
-		}
-		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x77)//直走
-		{
-			straight_drive=1;
-		}
-		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x00)//停车
-		{
-			car_stop=1;
-		}
-		
-		if(remote_frame_data[5]==0x00&&remote_frame_data[6]==0x33)//倒车_李秋键
-		{
-			car_go_back=1;
-		}
-		if(remote_frame_data[5]==0x00&&remote_frame_data[6]==0x99)//调头_李秋键
-		{
-			car_turn_around=1;
-		}
-		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x55)//左转
-		{
-			left_turn=1;
-			high8=((WORD)(remote_frame_data[7])<<8);
-			low8=(WORD)(remote_frame_data[8]);
-			steer_rate=(high8|low8);	
-		}
-		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x88)//变速
-		{
-			speed_change=1;
-			high9=((WORD)(remote_frame_data[7])<<8);
-			low9=(WORD)(remote_frame_data[8]);
-			speed_number=(high9|low9);
-		}
-		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x11)//给角度
-		{
+			barrier_left_detected=0;
+			barrier_right_detected=0;
+			barrier_offset=0;
 			if(remote_frame_data[7]>=0x00&&remote_frame_data[7]<0x2A)
 			{
 				left_turn=1;
@@ -486,16 +503,54 @@ void Wifi_Ctrl()
 			{
 				target_near=1;
 			}
-			if(remote_frame_data[7]<=0x0E||remote_frame_data[7]>=0xF1&&remote_frame_data[8]<0x05)
-			{
-				target_access=1;
-			}
+//			if(remote_frame_data[7]<=0x0E||remote_frame_data[7]>=0xF1&&remote_frame_data[8]<0x05)
+//			{
+//				target_access=1;
+//			}
 			message_received=1;
 			
-		}
+		}		
 		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x22)//丢失
 		{
+			//barrier_offset=0;
 			target_lost++;
+		}
+		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x44)//避障
+		{
+			int m=change_hex_into_dec(remote_frame_data[7]);
+			//if(m>0-10*barrier_offset&&m<30&&remote_frame_data[8]<0x78)
+			if(m>=0+3*barrier_offset)			
+			{
+				barrier_left_detected=1;
+				barrier_offset=-1;
+				LCD_Write_Num(105,1,m,2);
+				LCD_Write_Num(105,2,barrier_offset,2);
+				low8=120-(WORD)(remote_frame_data[8]);
+				angle_rate=low8;
+				if(angle_rate>60)
+				{
+					angle_rate=60;
+				}
+			}
+			//if(m<0-10*barrier_offset&&m>-30&&remote_frame_data[8]<0x78)
+			else
+			{
+				barrier_right_detected=1;
+				barrier_offset=1;
+				LCD_Write_Num(105,1,m,2);
+				LCD_Write_Num(105,2,barrier_offset,2);
+				low8=120-(WORD)(remote_frame_data[8]);
+				angle_rate=low8;
+				if(angle_rate>60)
+				{
+					angle_rate=60;
+				}
+			}
+//			if(remote_frame_data[8]<0x30)
+//			{
+//				stuck++;
+//			}
+			message_received=1;
 		}
 		
 	}

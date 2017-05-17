@@ -36,8 +36,7 @@ void Mode3_Andriod(void);
 void main(void)
 	{
 	init_all_and_POST();
-	
-//	set_steer_helm_basement(3282);
+//	set_steer_helm_basement(3000);
 //	set_speed_pwm(300);
 //	delay_ms(12000);
 //	sending_service_package(0x55,0x0066,0x01F4);
@@ -79,14 +78,14 @@ void Mode0_DebugCamera(void)
 //		if(!target_near)//在距离小于5的时候不进超声
 //		{
 //		
-		supersonic();
+//		supersonic();
 //		}
-		if(!get_ss)
-		{
+//		if(!get_ss)
+//		{
 			
 			control_car_action();			// 全场动作控制
-		}
-		get_ss=0;
+//		}
+//		get_ss=0;
 //		EMIOS_0.CH[3].CSR.B.FLAG = 1;
 //		EMIOS_0.CH[3].CCR.B.FEN=1;
 //		if(WIFICHEKER==1 && Car_Psg==1)            // 有一个时间间隔为了 保证在没有收到的时候不会发疯一样发

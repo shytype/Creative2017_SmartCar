@@ -52,8 +52,13 @@ extern int uturn;
 extern int target_lost;
 extern int target_access;
 extern int message_received;
+extern int barrier_left_detected;
+extern int barrier_right_detected;
+extern int stuck;
+extern int barrier_offset;
 extern short steer_rate;
 extern short speed_number;
+extern short angle_rate;
 int dasspeed=420;//识别时速度原pwm300，李秋键更改
 int last1,last2,last3,last4,last5=0;
 
@@ -64,15 +69,9 @@ void Car_UTurn(void)//U型弯，用于灯在后部范围内
 {
 	g_f_enable_mag_steer_control=0;
 	set_speed_target(0);
-	LeftL=1;
-	set_steer_helm_basement(data_steer_helm_basement.left_limit);
-	delay_ms(800);
-	set_speed_pwm(365);//原pwm300，李秋键更改
-	LeftL=0;
-	delay_ms(1400);
-	LeftL=1;
-	delay_ms(800);//原本delayms800，李秋键更改
-	LeftL=0;
+	set_steer_helm_basement(3600);
+	set_speed_pwm(420);//原pwm300，dby更改
+	delay_ms(2000);//原本delayms800，dby更改
 	set_steer_helm_basement(data_steer_helm_basement.center);
 	set_car_direction(UTURN);
 	EMIOS_0.CH[3].CCR.B.FEN=0;
@@ -80,7 +79,6 @@ void Car_UTurn(void)//U型弯，用于灯在后部范围内
 	set_speed_pwm(0);//李秋键增加
 	
 }
-
 /*-----------------------------------------------------------------------*/
 /* 设置车身方向        act为左右转、掉头                       */
 /*-----------------------------------------------------------------------*/
@@ -376,7 +374,6 @@ void RFID_control_car_1_action(WORD site)
 		bz=-1;
 	}
 }
-
 /*-----------------------------------------------------------------------*/
 /* 整车动作控制                                                          */
 /* RFID                                                                  */
@@ -955,13 +952,14 @@ void control_car_action(void)
         	set_steer_helm_basement(data_steer_helm_basement.center);
         	set_speed_pwm(dasspeed);	
         }
-        if(car_go_back==1)//倒车
-        {
-        	car_go_back=0;
-        	last5=1;
-        	set_steer_helm_basement(data_steer_helm_basement.center);
-        	set_speed_pwm(-1*dasspeed);
-        }
+//        if(stuck>30)//倒车
+//        {
+//        	stuck=0;
+//        	last5=1;
+//        	set_steer_helm_basement(data_steer_helm_basement.center);
+//        	set_speed_pwm(-1*dasspeed);
+//        	delay_ms(1000);
+//        }
         if(car_stop==1)
         {
         	car_stop=0;
@@ -987,22 +985,40 @@ void control_car_action(void)
         	Car_UTurn();
         	
         }
-        if(target_access)
-        {
-        	target_access=0;
-        	set_steer_helm_basement((data_steer_helm_basement.right_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center+100);
-        	set_speed_pwm(dasspeed);
-        }
+//        if(target_access)
+//        {
+//        	target_access=0;
+//        	set_steer_helm_basement((data_steer_helm_basement.right_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center+100);
+//        	set_speed_pwm(dasspeed);
+//        }
         if(message_received==1)
         {
         	message_received=0;
         	target_lost=0;
         }
-        if(target_lost==10)
+        if(target_lost>20)
         {
         	target_lost=0;
-        	set_steer_helm_basement(data_steer_helm_basement.left_limit);
-        	set_speed_pwm(500);
+        	set_steer_helm_basement(data_steer_helm_basement.center);
+        	set_speed_pwm(0);
+        }
+        if(barrier_left_detected)
+        {
+        	barrier_left_detected=0;
+        	set_steer_helm_basement((data_steer_helm_basement.right_limit-data_steer_helm_basement.center)*angle_rate/60+data_steer_helm_basement.center+250);
+        	//set_steer_helm_basement(3600);
+        	LCD_Write_Num(105,1,10010,2);
+        	set_speed_pwm(dasspeed);
+        	delay_ms(50);
+        }
+        if(barrier_right_detected)
+        {
+            barrier_right_detected=0;
+        	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.left_limit)*steer_rate/60-250);
+        	//set_steer_helm_basement(3000);
+        	LCD_Write_Num(105,1,10086,2);
+        	set_speed_pwm(dasspeed);
+            delay_ms(50);
         }
 //		if(Car_Stop==1 &&  RoadType!=88 && RoadType!=2)
 //		{
@@ -1042,7 +1058,7 @@ void device_Num_change(void)//把设备号换成16进制（好像没啥用）
 }
 void car_default()//每次开车将宝马所有标志位置为默认状态，防止起冲突
 {
-	if(WIFI_ADDRESS_CAR_3 == g_device_NO)
+	if(WIFI_ADDRESS_CAR_1 == g_device_NO)
 	{
 		if(Door_Close_Run)
 			Door_Close_Run=0;

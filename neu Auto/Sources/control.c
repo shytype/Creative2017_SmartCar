@@ -11,6 +11,7 @@ int update_steer_helm_basement_to_steer_helm(void);
 int g_f_big_U=0;
 int g_f_big_U_2=0;
 int counter=0;
+int delay_count=0;
 
 DWORD tmp_a, tmp_b;
 
@@ -44,25 +45,22 @@ void PitISR(void)
 	/* end:encoder */
 
 	/* 开始执行速度控制算法 */
-//	if (g_f_enable_speed_control)
-//	{
-//		//SpeedControl();//不同路段PID,尚未调,不可用
-//		contorl_speed_encoder_pid();
-//	}
-	if(counter==3)
+	if (g_f_enable_speed_control)
 	{
-		//g_f_enable_supersonic=1;                    //jiej
-		if (g_f_enable_supersonic)
-		{
-			trigger_supersonic_2();
-			get_supersonic_time_2();
-			//while((ABS((WORD)(tmp_time.R))/100)<100)
-			//{}				
-			LCD_Write_Num(96,6,(ABS((WORD)(tmp_time.R))/100),5);
-		}
-		//delay_ms(1000);   jqy
-		counter=0;
+		//SpeedControl();//不同路段PID,尚未调,不可用
+		contorl_speed_encoder_pid();
 	}
+	
+	//光编记步
+	if (data_encoder.is_forward)
+	{
+		data_encoder.speed_real =(SWORD) data_encoder.speed_now;
+	}
+	else
+	{
+		data_encoder.speed_real = 0 - (SWORD) data_encoder.speed_now;
+	}
+	delay_count+=data_encoder.speed_real;
 	
 #if 0
 	/* 发送位置 */

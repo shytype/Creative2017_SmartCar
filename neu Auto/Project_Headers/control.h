@@ -95,14 +95,16 @@ struct
 	WORD cnt_old;
 	WORD cnt_new;
 	WORD speed_now;
+	SWORD speed_real;
 	SWORD is_forward;
-} data_encoder = { 0x0000, 0x0000, 0x0000, 0, };
+} data_encoder = { 0x0000, 0x0000, 0x0000, 0,0, };
 #else
 extern struct
 {
 	WORD cnt_old;
 	WORD cnt_new;
 	WORD speed_now;
+	SWORD speed_real;
 	SWORD is_forward;
 } data_encoder;
 #endif

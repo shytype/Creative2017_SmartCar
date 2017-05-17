@@ -199,7 +199,7 @@ void get_supersonic_time_0(void)
 	}
 	else
 	{
-		tmp_time.R = 0xfffff - tmp_b + tmp_a;
+		tmp_time.R = 0xFFFFFFFF - tmp_b + tmp_a;
 	}
 	
 	EMIOS_0.CH[1].CSR.B.FLAG = 1;	//清除中断标志位
@@ -232,7 +232,7 @@ void get_supersonic_time_2(void)
 		}
 		else
 		{
-			tmp_time2.R = 0xffff - tmp_b + tmp_a;
+			tmp_time2.R = 0xFFFFFFFF - tmp_b + tmp_a;
 		}
 
 		EMIOS_0.CH[1].CSR.B.FLAG = 1;	//清除中断标志位
@@ -366,8 +366,9 @@ void supersonic(void)
     
  	if(sign>=10)
  	{
- 		sign=0; 		
+ 		sign=0; 
  		set_steer_helm_basement(data_steer_helm_basement.right_limit);
+ 		set_speed_pwm(375);
  		get_ss=1;
         //delay_ms(500);
  		//set_steer_helm_basement(data_steer_helm_basement.center);
