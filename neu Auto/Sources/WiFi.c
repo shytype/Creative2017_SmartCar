@@ -50,7 +50,7 @@ short high9;
 short low9;
 short steer_rate=0;
 short angle_rate=0;
-short speed_number=500;
+short speed_number=20;
 /*-----------------------------------------------------------------------*/
 /* 执行远程命令                                                          */
 /*-----------------------------------------------------------------------*/
@@ -533,7 +533,7 @@ void Wifi_Ctrl()
 				}
 			}
 			//if(m<0-10*barrier_offset&&m>-30&&remote_frame_data[8]<0x78)
-			else
+			else if(m)
 			{
 				barrier_right_detected=1;
 				barrier_offset=1;

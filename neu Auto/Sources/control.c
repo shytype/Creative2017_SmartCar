@@ -48,7 +48,7 @@ void PitISR(void)
 	if (g_f_enable_speed_control)
 	{
 		//SpeedControl();//不同路段PID,尚未调,不可用
-		contorl_speed_encoder_pid();
+		control_speed_encoder_pid();
 	}
 	
 	//光编记步
@@ -170,9 +170,9 @@ static SWORD get_e0()
 /* PID速度控制                                                                       */
 /* 有问题找叶川                                                                      */                                                          
 /*-----------------------------------------------------------------------*/
-void contorl_speed_encoder_pid(void)
+void control_speed_encoder_pid(void)
 {
-	SWORD d_speed_pwm;
+	SWORD d_speed_pwm=0;
 	SWORD e0;
 	static SWORD e1=0;
 	static SWORD e2=0;
@@ -411,31 +411,7 @@ int abs(int data)
 /*-----------------------------------------------------------------------*/
 void set_door_pwm(int16_t speed_pwm)	//speed_pwm正为向前，负为向后
 {
-	if (speed_pwm>0)	//forward
-	{
-		if (speed_pwm>SPEED_PWM_MAX)
-		{
-			speed_pwm = SPEED_PWM_MAX;
-		}
-		EMIOS_0.CH[18].CBDR.R = speed_pwm;
-		EMIOS_0.CH[20].CBDR.R = 1;
-		
-	}
-	else if (speed_pwm<0)	//backward
-	{
-		speed_pwm = 0-speed_pwm;
-		if (speed_pwm>SPEED_PWM_MAX)
-		{
-			speed_pwm = SPEED_PWM_MAX;
-		}
-		EMIOS_0.CH[18].CBDR.R = 1;
-		EMIOS_0.CH[20].CBDR.R = speed_pwm;	
-	}
-	else
-	{
-		EMIOS_0.CH[18].CBDR.R = 1;
-		EMIOS_0.CH[20].CBDR.R = 1;	
-	}
+	return;
 }
 void Road_Stop(void)
 {

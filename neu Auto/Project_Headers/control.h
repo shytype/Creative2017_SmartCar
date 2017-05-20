@@ -97,7 +97,7 @@ struct
 	WORD speed_now;
 	SWORD speed_real;
 	SWORD is_forward;
-} data_encoder = { 0x0000, 0x0000, 0x0000, 0,0, };
+} data_encoder = { 0x0000, 0x0000, 0x0000, 0,0};
 #else
 extern struct
 {
@@ -116,7 +116,7 @@ struct
 	float p;
 	float i;
 	float d;
-} data_speed_pid = { 15, 1, 5 };
+} data_speed_pid = { 15, 0.2, 1 };
 #else
 extern struct
 {
@@ -155,7 +155,7 @@ extern void set_speed_KP(WORD kp);
 extern void set_speed_KI(WORD ki);
 extern void set_speed_KD(WORD kd);
 extern void set_steer_helm(SWORD helmData);
-extern void contorl_speed_encoder_pid(void);
+extern void control_speed_encoder_pid(void);
 extern DWORD diff_time_basis_PIT(const DWORD new_time, const DWORD old_time);
 extern void set_steer_helm_basement_center(WORD helmData);
 extern void set_steer_helm_basement_left_limit(WORD helmData);

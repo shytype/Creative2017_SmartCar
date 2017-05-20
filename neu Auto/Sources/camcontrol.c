@@ -126,7 +126,7 @@ void SpeedControl()
 //	}
    	if(Counter_Error>50) {set_speed_pwm(0);return;}
    	
-   	StartTime2s++;
+   	//StartTime2s++;
 	//2*****正常速度控制...速度分配还要结合最远行和offset
 
 
@@ -144,6 +144,6 @@ void SpeedControl()
 									data_speed_pid.p=5.5;data_speed_pid.i=0.2;data_speed_pid.d=0.2;}
 
 
-	if(StartTime2s<290)	{if(data_encoder.speed_now>data_speed_settings.speed_target) SumError=0;}
-	else {StartTime2s--;}
+	//if(StartTime2s<290)	{if(data_encoder.speed_now>data_speed_settings.speed_target) SumError=0;}
+	//else {StartTime2s--;}
 }

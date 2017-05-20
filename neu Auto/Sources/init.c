@@ -117,7 +117,7 @@ void init_pit(void)
 	PIT.PITMCR.R = 0x00000001;	/* Enable PIT and configure timers to stop in debug modem */
 	PIT.CH[1].LDVAL.R = 800000;	/* 800000==10ms */
 	PIT.CH[1].TCTRL.R = 0x00000003;	/* Enable PIT1 interrupt and make PIT active to count */
-	INTC_InstallINTCInterruptHandler(PitISR,60,1);	/* PIT 1 interrupt vector with priority 1 */
+	INTC_InstallINTCInterruptHandler(PitISR,60,2);	/* PIT 1 interrupt vector with priority 1 */
 }
 
 
@@ -206,7 +206,7 @@ void initEMIOS_0Image(void)
 //	EMIOS_0.CH[3].CCR.B.EDPOL=1; //Edge Select falling edge
 //	EMIOS_0.CH[3].CCR.B.FEN=1;  //interupt enbale
 	SIU.PCR[3].R = 0x0102;  // Initialize pad for eMIOS channel Initialize pad for input 
-	INTC_InstallINTCInterruptHandler(FieldInputCapture,142,2);  
+	INTC_InstallINTCInterruptHandler(FieldInputCapture,142,8);  
 	
 	//PA7行中断捕捉上升沿
 	EMIOS_0.CH[7].CCR.B.MODE = 0x02; // Mode is SAIC, continuous 
@@ -215,7 +215,7 @@ void initEMIOS_0Image(void)
 	EMIOS_0.CH[7].CCR.B.EDPOL=1; //Edge Select rising edge
 //	EMIOS_0.CH[7].CCR.B.FEN=1;  //interupt enbale
 	SIU.PCR[7].R = 0x0102;  // Initialize pad for eMIOS channel Initialize pad for input 
-	INTC_InstallINTCInterruptHandler(RowInputCapture,144,3); 
+	INTC_InstallINTCInterruptHandler(RowInputCapture,144,8); 
 	
 	//C10口二值化入口
 	SIU.PCR[42].R = 0x0102;  // C9口二值化入口
@@ -310,36 +310,7 @@ void delay_ms(DWORD ms)
 	for (i = 0; i < ms; i++)
 	{
 		delay_us(1000);
-		if(RFID_site_data.is_new_site==1 && Game_over==1)
-		{
-			RFID_site_data.is_new_site = 0;
-			RFID_site_data.roadnum=RFID_Num_Exp(RFID_site_data.site);
-			if((RFID_site_data.roadnum>>8)==0x23)
-			{
-				set_speed_pwm(-500);
-				break;
-			}
-			Game_over=0;
-		}
-//		if(RFID_site_data.is_new_site && (RFID_site_data.roadnum>>0)==0x1102)//读到红绿灯
-//		{
-//			set_speed_pwm(0);
-//			Car_Stop=1;
-//			break;
-//		}
-		if(out==1)
-		{
-			if(RFID_site_data.is_new_site==1)//读到出库卡
-			{
-				RFID_site_data.is_new_site = 0;
-				RFID_site_data.roadnum=RFID_Num_Exp(RFID_site_data.site);
-				if((RFID_site_data.roadnum>>8)==0x24)
-				{
-					out=0;
-					break;
-				}
-			}
-		}
+		
 	}
 }
 
@@ -350,17 +321,19 @@ void delay_ms(DWORD ms)
 void init_all_and_POST(void)
 {
 	int i = 0;
-	/* TF卡 */
-	TCHAR *path = "0:";
+//	/* TF卡 */
+//	TCHAR *path = "0:";
 	
 	disable_watchdog();
 	init_modes_and_clock();
 	initEMIOS_0MotorAndSteer();
-//	initEMIOS_0Image();/* 摄像头输入中断初始化 */
+	initEMIOS_0Image();/* 摄像头输入中断初始化 */
 	
 	/* 初始化SPI总线 */
 	init_DSPI_1();
-//	init_pit();
+	init_pit();
+	delay_ms(5);
+	init_pit_1s_L();
 	init_led();
 	init_DIP();
 	init_serial_port_1();//Wifi_ouyang
@@ -368,20 +341,21 @@ void init_all_and_POST(void)
 	init_serial_port_0();
 	//init_ADC();
 	//init_serial_port_3();
-	init_supersonic_trigger_0();	
-	init_supersonic_receive_0();
+	//init_supersonic_trigger_0();	
+	//init_supersonic_receive_0();
 //	init_supersonic_receive_1();
 //	init_supersonic_trigger_1();		
-    init_supersonic_receive_2();
-	init_supersonic_trigger_2();
+    //init_supersonic_receive_2();
+	//init_supersonic_trigger_2();
 //	init_supersonic_trigger_3();
 //	init_supersonic_receive_3();
 	init_optical_encoder();
 
+	
 	//init_DSPI_2();
 	//init_I2C();
 	init_choose_mode();
-	init_pit_1s_L();
+	
 	
 	/* 初始化SPI总线 */
 	//init_DSPI_1();
@@ -397,93 +371,10 @@ void init_all_and_POST(void)
 	delay_ms(50);
 	LCD_Fill(0x00);	/* 黑屏 */
 	delay_ms(50);
-	
-#if 0	
-	/* 初始化TF卡 */
 
-	LCD_P8x16Str(0,0, (BYTE*)"TF..");
-	if (!SD_init())
-	{
-		/* 挂载TF卡文件系统 */
-		if (FR_OK == f_mount(&fatfs1, path, 1))
-		{
-			/* 文件读写测试 */
-			if (!test_file_system())
-			{
-				g_devices_init_status.TFCard_is_OK = 1;
-			}
-		}
-	}
-	if (g_devices_init_status.TFCard_is_OK)
-	{
-		LCD_P8x16Str(0,0, (BYTE*)"TF..OK");
-	}
-	else
-	{
-		LCD_P8x16Str(0,0, (BYTE*)"TF..NOK");
-		suicide();
-	}
-	
-	/* 读取设备号 */
-
-	LCD_P8x16Str(0, 4, (BYTE*)"DeviceNo=");
-	if (!read_device_no_from_TF())
-	{
-		if (WIFI_ADDRESS_WITHOUT_INIT != g_device_NO)
-		{
-			LCD_PrintoutInt(72, 4, g_device_NO);
-		}
-		else
-		{
-			suicide();
-		}
-	}
-	else
-	{
-		suicide();
-	}
-	device_Num_change();
-	/* 开启RFID读卡器主动模式 */
-
-	//ouyang
-	if (!init_RFID_modul_type())
-	{
-		g_devices_init_status.RFIDCard_energetic_mode_enable_is_OK = 1;
-		LCD_P8x16Str(0, 6, (BYTE*)"RFID..OK");
-	}
-	else
-	{
-		g_devices_init_status.RFIDCard_energetic_mode_enable_is_OK = 0;
-		LCD_P8x16Str(0, 6, (BYTE*)"RFID..NOK");
-		suicide();
-	}
-	delay_ms(1000);
-	/* 换屏 */
-	LCD_Fill(0x00);
-
-
-
-	
-	/* 读取舵机参数 */
-	LCD_P8x16Str(0, 0, (BYTE*)"StH.L=");
-	if (read_steer_helm_data_from_TF())
-	{
-		suicide();
-	}
-	update_steer_helm_basement_to_steer_helm();
-	LCD_PrintoutInt(48, 0, data_steer_helm_basement.left_limit);
-	set_steer_helm_basement(data_steer_helm_basement.left_limit);
-	delay_ms(500);
-	LCD_P8x16Str(0, 2, (BYTE*)"StH.R=");
-	LCD_PrintoutInt(48, 2, data_steer_helm_basement.right_limit);
-	set_steer_helm_basement(data_steer_helm_basement.right_limit);
-	delay_ms(500);
-	LCD_P8x16Str(0, 4, (BYTE*)"StH.C=");
-	LCD_PrintoutInt(48, 4, data_steer_helm_basement.center);
-	set_steer_helm_basement(data_steer_helm_basement.center);
-#endif
 	g_device_NO=1;
 	update_steer_helm_basement_to_steer_helm();
+	LCD_P8x16Str(0, 0, (BYTE*)"StH.L=");
 	LCD_PrintoutInt(48, 0, data_steer_helm_basement.left_limit);
 	set_steer_helm_basement(data_steer_helm_basement.left_limit);
 	delay_ms(500);
@@ -504,12 +395,12 @@ void init_all_and_POST(void)
 
 	/* 换屏 */
 	LCD_Fill(0x00);
-//
-//	/* 速度闭环测试 */	
-//	g_f_enable_speed_control = 1;
-//	LCD_P8x16Str(0, 4, (BYTE*)"S.T=0");
-//	set_speed_target(0);
-//	delay_ms(2000);
+
+	/* 速度闭环测试 */	
+	g_f_enable_speed_control = 1;
+	LCD_P8x16Str(0, 4, (BYTE*)"S.T=0");
+	set_speed_target(0);
+	delay_ms(1000);
 	
 	/* 换屏 */
 	LCD_Fill(0x00);
@@ -535,7 +426,7 @@ void init_pit_1s_L(void)
 	PIT.PITMCR.R = 0x00000001;	/* Enable PIT and configure timers to stop in debug modem */
 	PIT.CH[1].LDVAL.R = 800000;	/* 800000==10ms */
 	PIT.CH[1].TCTRL.R = 0x00000003;	/* Enable PIT1 interrupt and make PIT active to count */
-	INTC_InstallINTCInterruptHandler(Pit_1s_L,60,1);	/* PIT 1 interrupt vector with priority 1 */
+	INTC_InstallINTCInterruptHandler(Pit_1s_L,61,1);	/* PIT 1 interrupt vector with priority 1 */
 }
 void Pit_1s_L(void)//10ms
 {
