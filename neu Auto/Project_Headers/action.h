@@ -72,7 +72,7 @@ void avoid_box();
 void fly_bridge();
 void push_box1();
 void Car_UTurn();
-void set_car_direction(SBYTE act);
+void set_car_direction(float act);
 //******************************2016赛季****************************************//
 void zhangai_run();
 void Start_one();

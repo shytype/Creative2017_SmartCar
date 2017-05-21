@@ -147,6 +147,7 @@ extern void send_remote_request_data(void);
 void send_net_cmd(BYTE des, WORD net_cmd);
 extern void rfid_ask_road(BYTE scr, BYTE des, BYTE length,	WORD cmd ,WORD RFID_Num);
 void report_online(void);
+extern int change_hex_into_dec(BYTE rev);
 
 extern void main_wifi_sender (void);
 extern void ancillary_wifi_sender (void);

@@ -26,9 +26,9 @@ DWORD tmp_a, tmp_b;
 void PitISR(void)
 {
 	g_f_pit = 1;
-	//D0=~D0;
+	//D6 =~ D6;
 	g_time_basis_PIT++;	/* 计时 */
-	counter++;	
+	//counter++;	
 
 	/* start:encoder */
 	data_encoder.is_forward = SIU.GPDI[46].B.PDI;//PC14
@@ -60,7 +60,7 @@ void PitISR(void)
 	{
 		data_encoder.speed_real = 0 - (SWORD) data_encoder.speed_now;
 	}
-	delay_count+=data_encoder.speed_real;
+	//delay_count+=data_encoder.speed_real;
 	
 #if 0
 	/* 发送位置 */
@@ -274,28 +274,28 @@ void set_steer_helm_basement(WORD helmData)
 //	{
 //		helmData = 5000;
 //	}
-	if(g_device_NO!=3)
-	{
-		if(helmData <= data_steer_helm_basement.left_limit)
+//	if(g_device_NO!=3)
+//	{
+		if(helmData >= data_steer_helm_basement.left_limit)
 		{
 			helmData = data_steer_helm_basement.left_limit;
 		}
-		else if(helmData >= data_steer_helm_basement.right_limit)
+		else if(helmData <= data_steer_helm_basement.right_limit)
 		{
 			helmData = data_steer_helm_basement.right_limit;
 		}
-	}
-	else
-	{
-		if(helmData <= data_steer_helm_basement.left_limit+100)
-		{
-			helmData = data_steer_helm_basement.left_limit+100;
-		}
-		else if(helmData >= data_steer_helm_basement.right_limit-100)
-		{
-			helmData = data_steer_helm_basement.right_limit-100;
-		}
-	}
+//	}
+//	else
+//	{
+//		if(helmData <= data_steer_helm_basement.left_limit+100)
+//		{
+//			helmData = data_steer_helm_basement.left_limit+100;
+//		}
+//		else if(helmData >= data_steer_helm_basement.right_limit-100)
+//		{
+//			helmData = data_steer_helm_basement.right_limit-100;
+//		}
+//	}
 	if(helmData <=3700)
 	{
 //		LeftL = 1;
@@ -357,9 +357,9 @@ void set_steer_helm_basement_right_limit(WORD helmData)
 /*-----------------------------------------------------------------------*/
 int update_steer_helm_basement_to_steer_helm(void)
 {
-	data_steer_helm.left_limit=2800;
-	data_steer_helm.right_limit=3800 ;
-	data_steer_helm.center=3282;
+	data_steer_helm.left_limit=3600;
+	data_steer_helm.right_limit=2820 ;
+	data_steer_helm.center=3211;
 	if(data_steer_helm_basement.left_limit < data_steer_helm_basement.center && data_steer_helm_basement.center < data_steer_helm_basement.right_limit)
 	{
 		data_steer_helm_basement.direction = 1;

@@ -19,7 +19,7 @@ int i;
 int j;
 extern int bz;
 extern int right;
-int velocity=20;
+int velocity=0;
 int sum=0;
 BYTE video_sender;
 extern int Hold_a;
@@ -36,9 +36,12 @@ void Mode3_Andriod(void);
 void main(void)
 	{
 	init_all_and_POST();
-//	set_steer_helm_basement(3000);
-//	set_speed_pwm(300);
-//	delay_ms(12000);
+//	set_steer_helm_basement(data_steer_helm_basement.left_limit);
+////	set_speed_pwm(300);
+//	delay_ms(5000);
+//	set_steer_helm_basement(data_steer_helm_basement.right_limit);
+//	delay_ms(5000);
+//	set_steer_helm_basement(data_steer_helm_basement.center);
 //	sending_service_package(0x55,0x0066,0x01F4);
 //	delay_ms(2000);
 //	sending_service_package(0x55,0x0067,0x01F4);
@@ -55,7 +58,8 @@ void Mode0_DebugCamera(void)
 	g_f_enable_speed_control=1;
 	//Start_one();
 	//set_speed_target(0);
-#if 1
+//#if 1
+	//EMIOS_0.CH[3].CCR.B.FEN=1;//开场中断
 	for (;;)
 	{
 		if (REMOTE_FRAME_STATE_OK == g_remote_frame_state)
@@ -63,6 +67,7 @@ void Mode0_DebugCamera(void)
 			g_remote_frame_state = REMOTE_FRAME_STATE_NOK;
 			Wifi_Ctrl();
 		}
+		velocity=150;
 //		if(!target_near)//在距离小于5的时候不进超声
 //		{
 //		
@@ -74,6 +79,8 @@ void Mode0_DebugCamera(void)
 			control_car_action();			// 全场动作控制
 //		}
 //		get_ss=0;
+			//EMIOS_0.CH[3].CSR.B.FLAG = 1;
+			//EMIOS_0.CH[3].CCR.B.FEN=1;
 	}
-#endif
+//#endif
 }

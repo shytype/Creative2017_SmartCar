@@ -305,10 +305,10 @@ void FindBlackLine(void)
 		Pre_handle(lr);				//判断此次找线的起点和终点
 	}
 	Analyse_Rigntangle();           //分析是不是直角	
-	if(flag_Rightangle_l==1)		D0=0;
-	else if(flag_Rightangle_l==0)	D0=1;
-	if(flag_Rightangle_r==1)		D1=0;
-	else if(flag_Rightangle_r==0)	D1=1;
+//	if(flag_Rightangle_l==1)		D0=0;
+//	else if(flag_Rightangle_l==0)	D0=1;
+//	if(flag_Rightangle_r==1)		D1=0;
+//	else if(flag_Rightangle_r==0)	D1=1;
 	Cross_Fill();
 	//DetectSlope();					//检测坡道
 	AnalyzeRoadType();				//分析赛道类型	
@@ -2196,7 +2196,7 @@ byte JudgeBarrier()
 		if((Count1>1)||(Count2>1))
 		{
 			RoadType=Barrier2;//左右搜索点均错过障碍物的情况判断出的障碍
-			D1=0;
+			//D1=0;
 		}
 	}
 	o=0;

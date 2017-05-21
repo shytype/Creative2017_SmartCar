@@ -80,10 +80,10 @@ void init_led(void)
 	SIU.PCR[14].R = 0x0203;/* PA14  */
 	SIU.PCR[15].R = 0x0203;/* PA15  */
 #endif
-	D0 = 1;	/* 1=熄灭 */
-	D1 = 1;
-	D2 = 1;
-	D3 = 1;
+//	D0 = 1;	/* 1=熄灭 */
+//	D1 = 1;
+//	D2 = 1;
+//	D3 = 0;
 	D5 = 1;
 	D6 = 1;
 	D7 = 1;
@@ -215,7 +215,7 @@ void initEMIOS_0Image(void)
 	EMIOS_0.CH[7].CCR.B.EDPOL=1; //Edge Select rising edge
 //	EMIOS_0.CH[7].CCR.B.FEN=1;  //interupt enbale
 	SIU.PCR[7].R = 0x0102;  // Initialize pad for eMIOS channel Initialize pad for input 
-	INTC_InstallINTCInterruptHandler(RowInputCapture,144,8); 
+	//INTC_InstallINTCInterruptHandler(RowInputCapture,144,8); 
 	
 	//C10口二值化入口
 	SIU.PCR[42].R = 0x0102;  // C9口二值化入口
@@ -294,7 +294,7 @@ void delay_us(DWORD us)
 	
 	for (i = 0; i < us; i++)
 	{
-		for (j = 0; j < 9; j++) {}
+  		for (j = 0; j < 9; j++) {}
 	}
 }
 

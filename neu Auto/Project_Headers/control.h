@@ -3,10 +3,10 @@
 
 
 /* 方向舵机PWM */
-#define STEER_HELM_CENTER (3282)
+#define STEER_HELM_CENTER (3211)
 #define STEER_HELM_TEST (1500)
-#define STEER_HELM_LEFT (2800)
-#define STEER_HELM_RIGHT (3800)
+#define STEER_HELM_LEFT (3600)
+#define STEER_HELM_RIGHT (2820)
 #define STEER_HELM_MIX (1038)
 #define STEER_HELM_MAX (6146)
 
@@ -21,7 +21,7 @@
 /* 速度光编 */
 #define SPEED_ENCODER_STOP (0x0000)
 #define SPEED_ENCODER_MIN (0x0002)
-#define SPEED_ENCODER_MAX (0x0110)
+#define SPEED_ENCODER_MAX (0x01F4)
 #define SPEED_ENCODER_TEST (11)
 
 extern int g_f_pit;
