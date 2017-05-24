@@ -67,7 +67,7 @@ void Mode0_DebugCamera(void)
 			g_remote_frame_state = REMOTE_FRAME_STATE_NOK;
 			Wifi_Ctrl();
 		}
-		velocity=150;
+		velocity=200;
 //		if(!target_near)//在距离小于5的时候不进超声
 //		{
 //		

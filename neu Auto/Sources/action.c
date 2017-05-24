@@ -22,7 +22,7 @@ int old_car_direction=1;//车身上一次绝对方向：1234北东南西
 //********************2016赛季参数******************************************
 extern int velocity;
 extern int zhangai;
-int bz=-1;//关键标志位  有问题问jqy
+int bz=0;//关键标志位  有问题问jqy
 int time=1;
 extern int jishu;
 int right=0;//改变2号车PID参数标志位
@@ -57,6 +57,7 @@ extern int barrier_right_detected;
 extern int stuck;
 extern int delay_count;
 extern int barrier_offset;
+extern int light_offset;
 extern int yanshi;
 extern short steer_rate;
 extern short speed_number;
@@ -169,14 +170,14 @@ void WiFi_control_car_4_action(WORD cmd)
 void control_car_action(void)
 {
 
-		int delay_count1=0,delay_count2=0;
-		delay_count=0;
-//		delay_count2=delay_count1;
-//		delay_count1=delay_count;
-//		if(delay_count2-delay_count1<5)
-//		{
-//			stuck++;		
-//		}
+		int delay_count1=0,delay_count2=0;		
+		delay_count2=delay_count1;
+		delay_count1=delay_count;
+		if(message_received&&delay_count1-delay_count2<10)
+		{
+			stuck++;
+		
+		}
 		//supersonic();
 		if(speed_change==1)
 		{
@@ -209,7 +210,7 @@ void control_car_action(void)
         	right_turn=0;
         	last1=1;
         	LCD_Write_Num(105,1,1,2);
-        	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*steer_rate/42);
+        	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*steer_rate/42+light_offset*100);
         	if(yanshi==1)
         	{
         	   yanshi=0;
@@ -228,14 +229,15 @@ void control_car_action(void)
 //        	//set_speed_pwm(dasspeed);	
 //        	set_speed_target(velocity);	
 //       }
-//        if(stuck>20)//倒车
-//        {
-//        	stuck=0;
-//        	last5=1;
-//        	set_steer_helm_basement(data_steer_helm_basement.center);
-//        	set_speed_target(-50);
-//        	delay_ms(1000);
-//        }
+        if(stuck>200)//倒车
+        {
+        	stuck=0;
+        	bz=0;
+        	last5=1;
+        	set_steer_helm_basement(data_steer_helm_basement.center);
+        	set_speed_target(-100);
+        	delay_ms(3000);
+        }
         if(car_stop==1)
         {
         	car_stop=0;
@@ -254,7 +256,7 @@ void control_car_action(void)
             left_turn=0;
             last4=1;
             LCD_Write_Num(105,1,4,2);
-            set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center);
+            set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center-light_offset*100);
             if(yanshi==1)
             {
                 yanshi=0;
@@ -277,26 +279,28 @@ void control_car_action(void)
         if(target_lost>20)
         {
         	target_lost=0;
-        	set_steer_helm_basement(data_steer_helm_basement.center);
-        	set_speed_target(0);
+        	set_steer_helm_basement(3050);
+        	set_speed_target(150);
         }
         if(barrier_left_detected)
         {
         	barrier_left_detected=0;
-        	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*angle_rate/60-200);
+        	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*angle_rate/60-150);
         	//set_steer_helm_basement(3600);
         	LCD_Write_Num(105,1,5,2);
         	//set_speed_pwm(dasspeed);
         	set_speed_target(velocity);
+        	delay_ms(50);
         	//delay_ms(50);
         }
         if(barrier_right_detected)
         {
             barrier_right_detected=0;
-        	set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*angle_rate/60+data_steer_helm_basement.center+200);
+        	set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*angle_rate/60+data_steer_helm_basement.center+150);
         	//set_steer_helm_basement(3000);
         	LCD_Write_Num(105,1,6,2);
         	//set_speed_pwm(dasspeed);
+        	delay_ms(50);
         	set_speed_target(velocity);
             //delay_ms(50);
         }

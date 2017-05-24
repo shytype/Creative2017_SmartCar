@@ -25,6 +25,7 @@ extern int place[4];
 extern int used;
 extern int Emergency;
 extern int Hold_a;
+extern int bz;
 //********************2017赛季参数******************************************
 //********************dby 修改*********************************************
 int right_turn=0;
@@ -430,6 +431,7 @@ void Wifi_Ctrl()
 	if(remote_frame_data[2]==0x55)//来自dby的电脑
 	{
 		int m=change_hex_into_dec(remote_frame_data[7]);
+		WORD distance=(WORD)(remote_frame_data[8]);
 //		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x66)//右转
 //		{
 //			right_turn=1;
@@ -473,6 +475,7 @@ void Wifi_Ctrl()
 			barrier_left_detected=0;
 			barrier_right_detected=0;
 			barrier_offset=0;
+			light_offset=0;
 			if(m>=0+3*light_offset&&m<42)
 			{
 				left_turn=1;
@@ -503,6 +506,10 @@ void Wifi_Ctrl()
 			{
 				yanshi=1;
 			}
+			if(distance<16&&distance>5)
+			{
+				light_offset=1;
+			}
 //			if(remote_frame_data[7]>=0x40&&remote_frame_data[7]<0xC0)//如果信标不在车前半部分范围内时执行
 //			{
 //				car_turn_around=1;
@@ -525,7 +532,6 @@ void Wifi_Ctrl()
 		}
 		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x44)//避障
 		{
-			WORD distance=(WORD)(remote_frame_data[8]);
 			//if(m>0-10*barrier_offset&&m<30&&remote_frame_data[8]<0x78)
 			if(m>=0+3*barrier_offset)			
 			{
@@ -534,11 +540,15 @@ void Wifi_Ctrl()
 				LCD_Write_Num(105,1,m,2);
 				LCD_Write_Num(105,2,barrier_offset,2);
 				//low8=120-(WORD)(remote_frame_data[8]);
-				angle_rate=abs(127-distance);
-				if(angle_rate>60)
+				if(m>=-25&&m<=25)
 				{
 					angle_rate=60;
-				}
+				}				
+//					
+//				if(angle_rate>60)
+//				{
+//					angle_rate=60;
+//				}
 			}
 			//if(m<0-10*barrier_offset&&m>-30&&remote_frame_data[8]<0x78)
 			//else if(m)
@@ -549,10 +559,9 @@ void Wifi_Ctrl()
 				LCD_Write_Num(105,1,m,2);
 				LCD_Write_Num(105,2,barrier_offset,2);
 				//low8=120-(WORD)(remote_frame_data[8]);
-				angle_rate=abs(127-distance);
-				if(angle_rate>60)
+				if(m>=-25&&m<=25)
 				{
-					angle_rate=60;
+				   angle_rate=60;
 				}
 			}
 //			if(remote_frame_data[8]<0x30)
@@ -560,6 +569,7 @@ void Wifi_Ctrl()
 //				stuck++;
 //			}
 			message_received=1;
+			bz=1;
 		}
 		
 	}
