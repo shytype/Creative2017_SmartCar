@@ -21,6 +21,7 @@ extern int bz;
 extern int right;
 int velocity=0;
 int sum=0;
+int first_received=0;
 BYTE video_sender;
 extern int Hold_a;
 extern int Hold_b;
@@ -54,7 +55,6 @@ void main(void)
 }
 void Mode0_DebugCamera(void)
 {
-	
 	g_f_enable_speed_control=1;
 	//Start_one();
 	//set_speed_target(0);
@@ -66,8 +66,10 @@ void Mode0_DebugCamera(void)
 		{
 			g_remote_frame_state = REMOTE_FRAME_STATE_NOK;
 			Wifi_Ctrl();
+			first_received=1;			
 		}
-		velocity=200;
+		
+    	//LCD_Write_Num(105,1,(WORD)EMIOS_0.CH[24].CCNTR.R,4);
 //		if(!target_near)//在距离小于5的时候不进超声
 //		{
 //		

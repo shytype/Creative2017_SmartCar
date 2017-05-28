@@ -54,11 +54,12 @@ extern int target_access;
 extern int message_received;
 extern int barrier_left_detected;
 extern int barrier_right_detected;
-extern int stuck;
+extern int stuck1,stuck2;
 extern int delay_count;
 extern int barrier_offset;
 extern int light_offset;
 extern int yanshi;
+extern int count;
 extern short steer_rate;
 extern short speed_number;
 extern short angle_rate;
@@ -169,76 +170,59 @@ void WiFi_control_car_4_action(WORD cmd)
 /*-----------------------------------------------------------------------*/
 void control_car_action(void)
 {
-
-		int delay_count1=0,delay_count2=0;		
-		delay_count2=delay_count1;
-		delay_count1=delay_count;
-		if(message_received&&delay_count1-delay_count2<10)
+	velocity=225;	
+	if(speed_change==1)//修改速度
+	{
+		speed_change=0;
+		velocity=speed_number;
+		if(last1==1)
 		{
-			stuck++;
-		
+		   last1=0;
+		   right_turn=1;
 		}
-		//supersonic();
-		if(speed_change==1)
+		else if(last2==1)
 		{
-			 speed_change=0;
-			 velocity=speed_number;
-		     if(last1==1)
-		     {
-		    	 last1=0;
-		         right_turn=1;
-		     }
-		     else if(last2==1)
-		     {
-		    	 last2=0;
-		         straight_drive=1;
-		     }
-		    	 
-		     else if(last3==1)
-		     {
-		    	 last3=0;
-		    	 car_stop=1;
-		     }
-		     else if(last4==1)
-		     {
-		    	 last4=0;
-		    	 left_turn=1;
-		     }
+		   last2=0;
+		   straight_drive=1;
 		}
-		if(right_turn==1)
+		else if(last3==1)
+		{
+		   last3=0;
+		   car_stop=1;
+		}
+		else if(last4==1)
+		{
+		   last4=0;
+		   left_turn=1;
+		}
+	}
+		if(right_turn==1)//右转 找灯
         {
         	right_turn=0;
         	last1=1;
         	LCD_Write_Num(105,1,1,2);
-        	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*steer_rate/42+light_offset*100);
+        	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*steer_rate/42+light_offset*75);
         	if(yanshi==1)
         	{
         	   yanshi=0;
-        	   delay_ms(400);
+        	   delay_ms(1000);
         	}
         	//set_speed_pwm(dasspeed);
         	set_speed_target(velocity);
         	
         }
-//        if(straight_drive==1)
+
+//        if(stuck1>100||stuck2>50)//倒车
 //        {
-//        	straight_drive=0;
-//        	last2=1;
-//        	LCD_Write_Num(105,1,2,2);
+//        	stuck1=0;
+//        	stuck2=0;
+//        	//last5=1;
 //        	set_steer_helm_basement(data_steer_helm_basement.center);
-//        	//set_speed_pwm(dasspeed);	
-//        	set_speed_target(velocity);	
-//       }
-        if(stuck>200)//倒车
-        {
-        	stuck=0;
-        	bz=0;
-        	last5=1;
-        	set_steer_helm_basement(data_steer_helm_basement.center);
-        	set_speed_target(-100);
-        	delay_ms(3000);
-        }
-        if(car_stop==1)
+//        	set_speed_target(-200);
+//        	delay_ms(1500);
+//        	set_speed_target(200);
+//        }
+        if(car_stop==1)//停车
         {
         	car_stop=0;
         	last3=1;
@@ -246,44 +230,43 @@ void control_car_action(void)
             set_steer_helm_basement(data_steer_helm_basement.center);
             set_speed_target(0);	
         }
-//        if(car_turn_around==1)//调头
-//        {
-//        	car_turn_around=0;
-//        	Car_UTurn();//函数定义在action.c
-//        }
-        if(left_turn==1)
+
+        if(left_turn==1)//左转 包括避障和找灯
         {
             left_turn=0;
             last4=1;
             LCD_Write_Num(105,1,4,2);
-            set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center-light_offset*100);
+            set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center-light_offset*75);
             if(yanshi==1)
             {
                 yanshi=0;
-            	delay_ms(400);
+            	delay_ms(1000);
             }
             //set_speed_pwm(dasspeed);
             set_speed_target(velocity);	
         }
-//        if(target_access)
-//        {
-//        	target_access=0;
-//        	set_steer_helm_basement((data_steer_helm_basement.right_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center+100);
-//        	set_speed_pwm(dasspeed);
-//        }
-        if(message_received==1)
+
+        if(message_received==1)//收到找灯命令 丢失置零
         {
         	message_received=0;
         	target_lost=0;
         }
-        if(target_lost>20)
+        if(target_lost > 35)//丢失
         {
         	target_lost=0;
-        	set_steer_helm_basement(3050);
-        	set_speed_target(150);
+        	velocity=0;
+//        	set_steer_helm_basement(data_steer_helm_basement.right_limit);
+//        	set_speed_target(150);
+//        	set_steer_helm_basement(3050);
+//          set_speed_target(-150);
+        	set_steer_helm_basement(data_steer_helm_basement.center);
+        	set_speed_target(velocity);
+            delay_ms(2000);
+        	
         }
-        if(barrier_left_detected)
+        if(barrier_left_detected)//左边有障碍
         {
+        	velocity=170;
         	barrier_left_detected=0;
         	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*angle_rate/60-150);
         	//set_steer_helm_basement(3600);
@@ -293,9 +276,10 @@ void control_car_action(void)
         	delay_ms(50);
         	//delay_ms(50);
         }
-        if(barrier_right_detected)
+        if(barrier_right_detected)//右边有障碍
         {
-            barrier_right_detected=0;
+        	velocity=170;
+        	barrier_right_detected=0;
         	set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*angle_rate/60+data_steer_helm_basement.center+150);
         	//set_steer_helm_basement(3000);
         	LCD_Write_Num(105,1,6,2);
@@ -304,7 +288,34 @@ void control_car_action(void)
         	set_speed_target(velocity);
             //delay_ms(50);
         }
-        
+        if(stuck2>15)
+        {
+        	//stuck1=0;
+        	stuck2=0;
+        	count=0;
+        	set_steer_helm_basement(data_steer_helm_basement.center );
+        	set_speed_target(-150);
+        	delay_ms(1000);
+        }
+//        if(car_turn_around==1)//调头
+//        {
+//        	car_turn_around=0;
+//        	Car_UTurn();//函数定义在action.c
+//        }  
+        if(target_access)
+        {
+        	target_access=0;
+        	velocity=170;
+        }        
+//        if(straight_drive==1)//直行
+//        {
+//        	straight_drive=0;
+//        	last2=1;
+//        	LCD_Write_Num(105,1,2,2);
+//        	set_steer_helm_basement(data_steer_helm_basement.center);
+//        	//set_speed_pwm(dasspeed);	
+//        	set_speed_target(velocity);	
+//       }
 }
 void device_Num_change(void)//把设备号换成16进制（好像没啥用）
 {

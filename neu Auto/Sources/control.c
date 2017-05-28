@@ -12,6 +12,9 @@ int g_f_big_U=0;
 int g_f_big_U_2=0;
 int counter=0;
 int delay_count=0;
+extern WORD Steer_PWM[4];//舵机输出值记录
+extern int stuck;
+extern int first_received;
 
 DWORD tmp_a, tmp_b;
 
@@ -60,7 +63,7 @@ void PitISR(void)
 	{
 		data_encoder.speed_real = 0 - (SWORD) data_encoder.speed_now;
 	}
-	//delay_count+=data_encoder.speed_real;
+	delay_count+=data_encoder.speed_real;
 	
 #if 0
 	/* 发送位置 */
@@ -404,6 +407,94 @@ int abs(int data)
 	if (data<0)
 		data=0-data;
 	return data;
+}
+#endif
+#if 0
+/*-----------------------------------------------------------------------*/
+/*                           舵机PD控制                                                                      */     
+/*-----------------------------------------------------------------------*/
+void Steer_PDSet(void)
+{
+	target_offset=error;
+//	if(targetspeed<100)//120
+//	{
+//		Steer_kp=8;Steer_kd=0;
+//		return;
+//	}
+//	else if(targetspeed<130)//120(150)-5 8 8 12 12 10//130-170
+//	{
+//		if(ABS(target_offset)<5)        {Steer_kp=5;Steer_kd=0;}
+//		else if(ABS(target_offset)<10)  {Steer_kp=5;Steer_kd=0;}
+//		else if(ABS(target_offset)<30)  {Steer_kp=5;Steer_kd=0;}
+//		else if(ABS(target_offset)<35)  {Steer_kp=8;Steer_kd=0;}
+//		else if(ABS(target_offset)<40)  {Steer_kp=8;Steer_kd=0;}
+//		else							{Steer_kp=5;Steer_kd=0;}
+//		return;
+//	}
+	if(speedtarget<200)//140-180//150-190//160 5 8 8 10 10 10
+	{
+		if(ABS(target_offset)<20)        {Steer_kp=6;Steer_kd=5;}
+		else if(ABS(target_offset)<30)  {Steer_kp=(ABS(target_offset)-20)*0.2+6;Steer_kd=5;}
+		else if(ABS(target_offset)<40)  {Steer_kp=(ABS(target_offset)-30)*0.3+8;Steer_kd=5;}
+		else if(ABS(target_offset)<50)  {Steer_kp=(ABS(target_offset)-40)*0.1+11;Steer_kd=5;}
+		else                            {Steer_kp=12;Steer_kd=5;}
+//		
+//		if(ABS(target_offset)<5)        {Steer_kp=5;Steer_kd=5;}
+//		else if(ABS(target_offset)<10)  {Steer_kp=8;Steer_kd=5;}
+//		else if(ABS(target_offset)<30)  {Steer_kp=8;Steer_kd=5;}
+//		else if(ABS(target_offset)<35)  {Steer_kp=11;Steer_kd=5;}
+//		else if(ABS(target_offset)<40)  {Steer_kp=10;Steer_kd=5;}
+//		else                            {Steer_kp=10;Steer_kd=5;}
+		return;
+	}
+//	else if(targetspeed<250)
+//	{
+//		if(ABS(target_offset)<20)        {Steer_kp=8;Steer_kd=5;}
+//		else if(ABS(target_offset)<30)  {Steer_kp=(ABS(target_offset)-20)*0.1+8;Steer_kd=5;}
+//		else if(ABS(target_offset)<40)  {Steer_kp=(ABS(target_offset)-30)*0.3+9;Steer_kd=5;}
+//		else if(ABS(target_offset)<50)  {Steer_kp=(ABS(target_offset)-40)*0.1+12;Steer_kd=5;}
+//		else                            {Steer_kp=13;Steer_kd=5;}
+//		
+//		if(ABS(target_offset)<20)        {Steer_kp=5;Steer_kd=0.8;}
+//		else if(ABS(target_offset)<40)  {Steer_kp=ABS(target_offset)*0.25;Steer_kd=1;}
+//		else if(ABS(target_offset)<40)  {Steer_kp=8;Steer_kd=2;}
+//		else if(ABS(target_offset)<46)  {Steer_kp=10;Steer_kd=3;}
+//		else if(ABS(target_offset)<50)  {Steer_kp=10;Steer_kd=3;}
+//		else                            {Steer_kp=10;Steer_kd=2;}
+//		return;
+//	}
+//	else
+//	{
+//		if(ABS(target_offset)<5)        {Steer_kp=8;Steer_kd=0;}
+//		else if(ABS(target_offset)<10)  {Steer_kp=10;Steer_kd=0;}
+//		else if(ABS(target_offset)<20)  {Steer_kp=12;Steer_kd=0;}
+//		else if(ABS(target_offset)<30)  {Steer_kp=13;Steer_kd=0;}
+//		else if(ABS(target_offset)<40)  {Steer_kp=14;Steer_kd=0;}
+//		else                            {Steer_kp=15;Steer_kd=0;}	
+//	}
+}
+/*************************舵机控制，PD***********************/
+void SteerControl(void)
+{
+	if(wrong_flag==1)
+	{
+		Bee=1;
+		Steer_PWM[3]=(Steer_PWM[2]+Steer_PWM[1])/2;
+		SET_steer(Steer_PWM[3]);
+		//存舵机值
+		Steer_PWM[0]=Steer_PWM[1];Steer_PWM[1]=Steer_PWM[2];Steer_PWM[2]=Steer_PWM[3];
+		return;
+	}	
+	Steer_PWM[3] = CENTER-Steer_kp*target_offset-Steer_kd*(target_offset-last_offset); //位置式PD
+
+	if(Steer_PWM[3]>LEFT) Steer_PWM[3]=LEFT;
+	else if(Steer_PWM[3]<RIGHT) Steer_PWM[3]=RIGHT;
+
+	set_steer_helm_basement(Steer_PWM[3]);
+	
+	//存舵机值和offset值
+	Steer_PWM[0]=Steer_PWM[1];Steer_PWM[1]=Steer_PWM[2];Steer_PWM[2]=Steer_PWM[3];
+	last_offset=target_offset;
 }
 #endif
 /*-----------------------------------------------------------------------*/

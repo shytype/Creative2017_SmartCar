@@ -32,7 +32,7 @@ byte PastType[10];						//未用
 byte MostL[3];							//0:左线	1:右线	2:中线部分	
 byte MostR[3];							//0:左线	1:右线	2:中线部分	
 byte left_d[3],right_d[3],mid_d[3];		//0:左线	1:右线	2:中线部分	
-byte turn[10],count;					//turn[10]统计中线的起点、拐点、终点
+byte turn[10];					//turn[10]统计中线的起点、拐点、终点
 byte TurnPoint=0;
 
 //十字类型判断

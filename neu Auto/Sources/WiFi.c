@@ -26,6 +26,7 @@ extern int used;
 extern int Emergency;
 extern int Hold_a;
 extern int bz;
+extern int velocity;
 //********************2017赛季参数******************************************
 //********************dby 修改*********************************************
 int right_turn=0;
@@ -42,11 +43,15 @@ int target_access=0;
 int target_near=0;
 int barrier_left_detected=0;
 int barrier_right_detected=0;
-int stuck=0;
+int stuck1=0,stuck2=0;//1避障过程   2绕圈
 int barrier_offset=0;
 int light_offset=0;
 int yanshi=0;
+int count=0;
+BYTE light_distance[4]={0,0,0,0};//收到WiFi距离记录
+BYTE light_angle[4]={0,0,0,0};//收到WiFi角度记录
 extern get_ss;
+
 short high8;
 short low8;
 short high9;
@@ -431,7 +436,10 @@ void Wifi_Ctrl()
 	if(remote_frame_data[2]==0x55)//来自dby的电脑
 	{
 		int m=change_hex_into_dec(remote_frame_data[7]);
-		WORD distance=(WORD)(remote_frame_data[8]);
+		int distance_delta1,angle_delta1,light_delta3=0;
+		WORD distance=(WORD)(remote_frame_data[8]);		
+//		light_delta1=ABS(light_distance[0]-light_distance[1]);
+//		light_delta2=ABS(light_distance[1]-light_distance[2]);		
 //		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x66)//右转
 //		{
 //			right_turn=1;
@@ -476,6 +484,16 @@ void Wifi_Ctrl()
 			barrier_right_detected=0;
 			barrier_offset=0;
 			light_offset=0;
+			stuck1=0;
+			
+			light_distance[0]=light_distance[1];light_distance[1]=light_distance[2];light_distance[2]=light_distance[3];
+			light_distance[3]=distance;
+			distance_delta1=ABS(light_distance[2]-light_distance[3]);
+			
+			light_angle[0]=light_angle[1];light_angle[1]=light_angle[2];light_angle[2]=light_angle[3];
+			light_angle[3]=m;
+			angle_delta1=ABS(light_angle[2]-light_angle[3]);
+			velocity=225;
 			if(m>=0+3*light_offset&&m<42)
 			{
 				left_turn=1;
@@ -502,7 +520,7 @@ void Wifi_Ctrl()
 			//  low8=(WORD)((WORD)(remote_frame_data[7]));
 				steer_rate=42;
 			}
-			if(m>=-128&&m<=-107||m<=127&&m>=106)
+			if(m>=-128&&m<=-86||m<=127&&m>=85)
 			{
 				yanshi=1;
 			}
@@ -518,12 +536,27 @@ void Wifi_Ctrl()
 //			{
 //				target_near=1;
 //			}
-//			if(remote_frame_data[7]<=0x0E||remote_frame_data[7]>=0xF1&&remote_frame_data[8]<0x05)
-//			{
-//				target_access=1;
-//			}
-			message_received=1;
+			if(m>30&&m<-30&&distance<9)
+			{
+				target_access=1;
+				velocity=175;
+			}
+			if(distance_delta1<4&&angle_delta1<6)
+			{
+				stuck2++;
+			}
+			if(distance_delta1>=4||angle_delta1>=6)
+			{
+				count++;
+				//stuck2=0;
+			}
+			if(count>4)
+			{
+				count=0;
+				stuck2=0;
+			}
 			
+			message_received=1;				
 		}		
 		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x22)//丢失
 		{
@@ -539,6 +572,7 @@ void Wifi_Ctrl()
 				barrier_offset=-1;
 				LCD_Write_Num(105,1,m,2);
 				LCD_Write_Num(105,2,barrier_offset,2);
+				velocity=175;
 				//low8=120-(WORD)(remote_frame_data[8]);
 				if(m>=-25&&m<=25)
 				{
@@ -564,13 +598,35 @@ void Wifi_Ctrl()
 				   angle_rate=60;
 				}
 			}
-//			if(remote_frame_data[8]<0x30)
+//			if(remote_frame_data[8]<0x50)
 //			{
-//				stuck++;
+//				stuck1++;
 //			}
+			
 			message_received=1;
 			bz=1;
 		}
+//		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x33)//信标灯避障
+//		{
+//			if(m>=0+3*barrier_offset)			
+//			{
+//				barrier_left_detected=1;
+//			    barrier_offset=-1;
+//                if(m>=-25&&m<=25)
+//				{
+//					angle_rate=50;
+//				}				
+//			}
+//			else
+//			{
+//				barrier_right_detected=1;
+//				barrier_offset=1;
+//				if(m>=-25&&m<=25)
+//				{
+//					angle_rate=50;
+//				}
+//			}
+//		}
 		
 	}
 	//if(remote_frame_data[2]==0x02)//来自dby的自制上位机
