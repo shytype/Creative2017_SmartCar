@@ -57,6 +57,7 @@ extern struct
 
 
 extern void control_car_action(void);
+extern void control_car_action_stable(void);
 extern void device_Num_change(void);
 extern void car_default(void);
 void BMW_Taxi();

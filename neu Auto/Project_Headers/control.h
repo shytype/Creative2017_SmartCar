@@ -3,10 +3,10 @@
 
 
 /* 方向舵机PWM */
-#define STEER_HELM_CENTER (3211)
+#define STEER_HELM_CENTER (3290)
 #define STEER_HELM_TEST (1500)
-#define STEER_HELM_LEFT (3600)
-#define STEER_HELM_RIGHT (2820)
+#define STEER_HELM_LEFT (3688)
+#define STEER_HELM_RIGHT (2813)
 #define STEER_HELM_MIX (1038)
 #define STEER_HELM_MAX (6146)
 
@@ -116,7 +116,7 @@ struct
 	float p;
 	float i;
 	float d;
-} data_speed_pid = { 15 , 0.6 , 3 };
+} data_speed_pid = { 20 , 1.5 , 5 };
 #else
 extern struct
 {
@@ -167,6 +167,7 @@ extern void control_speed_motor(int speed_target);
 extern int abs(int data);
 extern void set_steer_helm(SWORD helmData);
 extern void Road_Stop(void);
+extern void Steer_PDSet(void);
 
 
 

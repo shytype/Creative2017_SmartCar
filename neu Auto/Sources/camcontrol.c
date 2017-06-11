@@ -8,6 +8,8 @@
 signed long target_offset=0,last_offset=0;	//舵机偏差值记录
 double Steer_kp=0,Steer_kd=0;//舵机P、D值
 WORD Steer_PWM[4]={0,0,0,0};//舵机输出值记录
+WORD steer=0;
+extern long angle;
 
 
 //**********************电机参数**********************************************
@@ -32,76 +34,36 @@ extern int right;
 //*****************************************************************************************************************
 void SteerControl()
 {
-	//*1***********出错图像角度控制,输出为前三次平均值**************
-	if(RoadType==NoLine||RoadType==Wrong) {
-		Steer_PWM[3]=(Steer_PWM[2]+Steer_PWM[1])/2;
-		set_steer_helm_basement(Steer_PWM[3]);
-		//set_steer_helm(Steer_PWM[3]);
-		//存舵机值
-		Steer_PWM[0]=Steer_PWM[1];Steer_PWM[1]=Steer_PWM[2];Steer_PWM[2]=Steer_PWM[3];
-		return;
+	target_offset=angle;
+	Steer_kd=2;
+	if(ABS(target_offset)>40)
+	{
+		target_offset=1.5*target_offset;
 	}
-	//最低速
-//	if(Slope==1)					{Steer_kp=10;Steer_kd=5;}
-//	else if(Slope==2)				{Steer_kp=8;Steer_kd=5;}
 
-	
-if(g_device_NO==3 && right==0)         //3号车PID参数       jqy
-{
-	if(ABS(target_offset)<6) 	{Steer_kp=8;Steer_kd=5;}
-	else if(ABS(target_offset)<26)  {Steer_kp=7.2+target_offset*target_offset/100;Steer_kd=10;}
-	else {Steer_kp=10.8+target_offset*target_offset/500;Steer_kd=5;}
-}
-if(g_device_NO==3 && right==1)         //3号车PID参数   转弯    jqy
-{
-	if(ABS(target_offset)<5) 	{Steer_kp=20;Steer_kd=5;}
-    else if(ABS(target_offset)<9) 	{Steer_kp=30;Steer_kd=5;}
-	else if(ABS(target_offset)<14) 	{Steer_kp=42;Steer_kd=5;}
-	else if(ABS(target_offset)<26)  {Steer_kp=58.2+target_offset*target_offset/100;Steer_kd=5;}
-	else {Steer_kp=36.8+target_offset*target_offset/500;Steer_kd=5;}
-}
-#if 1
-if(g_device_NO==2 && right==1)         //2号车PID参数   转弯    jqy
-{
-	if(ABS(target_offset)<5) 	{Steer_kp=14;Steer_kd=5;}
-    else if(ABS(target_offset)<9) 	{Steer_kp=24;Steer_kd=5;}
-	else if(ABS(target_offset)<14) 	{Steer_kp=32;Steer_kd=5;}
-	else if(ABS(target_offset)<26)  {Steer_kp=38.2+target_offset*target_offset/100;Steer_kd=5;}
-	else {Steer_kp=26.8+target_offset*target_offset/500;Steer_kd=5;}
-}
 
-if(g_device_NO==2 && right==0)         //2号车PID参数       jqy
-{
-	if(ABS(target_offset)<6) 	{Steer_kp=17;Steer_kd=5;}//25
-	else if(ABS(target_offset)<26)  {Steer_kp=21+target_offset*target_offset/100;Steer_kd=10;}//30
-	else {Steer_kp=26+target_offset*target_offset/500;Steer_kd=5;}//34
-}
-#endif
+                  //1号车PID参数       dby
 
-if(g_device_NO==1)                   //1号车PID参数       jqy
-{
-	if(ABS(target_offset)<6) 	{Steer_kp=6;Steer_kd=5;}
-	else if(ABS(target_offset)<26)  {Steer_kp=15.8+target_offset*target_offset/100;Steer_kd=10;}
-	else {Steer_kp=16.2+target_offset*target_offset/500;Steer_kd=5;}
-}
+	if(ABS(target_offset)<16)        {Steer_kp=2;}
+	else if(ABS(target_offset)<32)  {Steer_kp=(ABS(target_offset)-16)*0.1875+2;}
+	else if(ABS(target_offset)<48)  {Steer_kp=(ABS(target_offset)-32)*0.09375+5;}
+	else if(ABS(target_offset)<64)  {Steer_kp=(ABS(target_offset)-48)*0.1875+6.5;}
+	else                            {Steer_kp=9;}
+//	if(ABS(target_offset)>40)
+//	{
+//		target_offset=target_offset*1.5;
+//		
+//	}
 
-#if 0
-	if(ABS(target_offset)<5) 		{Steer_kp=5;Steer_kd=5;}
-			else if(ABS(target_offset)<10)  {Steer_kp=5;Steer_kd=5;}
-			else if(ABS(target_offset)<20)  {Steer_kp=10;Steer_kd=5;}
-			else if(ABS(target_offset)<30)  {Steer_kp=10;Steer_kd=5;}
-			else if(ABS(target_offset)<40)  {Steer_kp=12;Steer_kd=5;}
-			else							{Steer_kp=12;Steer_kd=5;}
-#endif
-	Steer_PWM[3]=data_steer_helm_basement.center+Steer_kp*target_offset+Steer_kd*(target_offset-last_offset);//位置式PD
-	//感觉不太靠谱，调的不好
+
+	steer=data_steer_helm_basement.center+Steer_kp*target_offset+Steer_kd*(target_offset-last_offset);//位置式PD
 	
 	//舵机限值+舵机输出
-	set_speed_pwm(velocity);
-	set_steer_helm_basement(Steer_PWM[3]);
-	LCD_Write_Num(105,5,(int)Steer_PWM[3],4);
+	//set_speed_pwm(velocity);
+	set_steer_helm_basement(steer);
+	//LCD_Write_Num(105,5,(int)Steer_PWM[3],4);
 	//存舵机值和offset值
-	Steer_PWM[0]=Steer_PWM[1];Steer_PWM[1]=Steer_PWM[2];Steer_PWM[2]=Steer_PWM[3];
+	//Steer_PWM[0]=Steer_PWM[1];Steer_PWM[1]=Steer_PWM[2];Steer_PWM[2]=Steer_PWM[3];
 	last_offset=target_offset;
 }
 

@@ -33,4 +33,13 @@ Sources/WiFi_c.obj: C:\Users\Du\workspace\neu\ Auto\Sources\WiFi.c \
 	C:\Users\Du\workspace\neu\ Auto\Project_Headers\IntcInterrupts.h \
 	C:\Users\Du\workspace\neu\ Auto\Project_Headers\video.h \
 	C:\Users\Du\workspace\neu\ Auto\Project_Headers\camcontrol.h \
-	C:\Users\Du\workspace\neu\ Auto\Project_Headers\analyse.h 
+	C:\Users\Du\workspace\neu\ Auto\Project_Headers\analyse.h \
+	E:\Freescale\CW\ MCU\ v10.6\MCU\PA_Support\ewl\EWL_C\include\math.h \
+	E:\Freescale\CW\ MCU\ v10.6\MCU\PA_Support\ewl\EWL_C\include\cmath \
+	E:\Freescale\CW\ MCU\ v10.6\MCU\PA_Support\ewl\EWL_C\include\math_api.h \
+	E:\Freescale\CW\ MCU\ v10.6\MCU\PA_Support\ewl\EWL_C\include\ewl_misra_types.h \
+	E:\Freescale\CW\ MCU\ v10.6\MCU\PA_Support\ewl\EWL_C\include\math_config.h \
+	E:\Freescale\CW\ MCU\ v10.6\MCU\PA_Support\ewl\EWL_C\include\ewl_t.h \
+	E:\Freescale\CW\ MCU\ v10.6\MCU\PA_Support\ewl\EWL_C\include\pa\math_ppc.h \
+	E:\Freescale\CW\ MCU\ v10.6\MCU\PA_Support\ewl\EWL_C\include\cerrno \
+	E:\Freescale\CW\ MCU\ v10.6\MCU\PA_Support\ewl\EWL_C\include\pa\math_ppc_inlines.h 

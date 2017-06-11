@@ -266,20 +266,35 @@ int is_big_endian()
 /*-----------------------------------------------------------------------*/
 void init_optical_encoder(void)	//PD12模数计数器入口，上升沿
 {
-	/* 计数部分 PD12 */
-	EMIOS_0.CH[24].CCR.B.MODE = 0x51;	/* Mode is MCB */
-	EMIOS_0.CH[24].CCR.B.BSL = 0x3;	/* Use internal counter */
-	EMIOS_0.CH[24].CCR.B.UCPRE=0;	/* Set channel prescaler to divide by 1 */
-	EMIOS_0.CH[24].CCR.B.UCPEN = 1;	/* Enable prescaler; uses default divide by 1 */
-	EMIOS_0.CH[24].CCR.B.FREN = 0;	/* Freeze channel counting when in debug mode */
-	EMIOS_0.CH[24].CCR.B.EDPOL=1;	/* Edge Select rising edge */
-	EMIOS_0.CH[24].CADR.R=0xffff;
-	/* (WORD)EMIOS_0.CH[15].CCNTR.R 数据寄存器 */
-	SIU.PCR[60].R = 0x0500;	/* Initialize pad for eMIOS channel Initialize pad for input */
+//	/* 计数部分 PD12 */
+//	EMIOS_0.CH[24].CCR.B.MODE = 0x51;	/* Mode is MCB */
+//	EMIOS_0.CH[24].CCR.B.BSL = 0x3;	/* Use internal counter */
+//	EMIOS_0.CH[24].CCR.B.UCPRE=0;	/* Set channel prescaler to divide by 1 */
+//	EMIOS_0.CH[24].CCR.B.UCPEN = 1;	/* Enable prescaler; uses default divide by 1 */
+//	EMIOS_0.CH[24].CCR.B.FREN = 0;	/* Freeze channel counting when in debug mode */
+//	EMIOS_0.CH[24].CCR.B.EDPOL=1;	/* Edge Select rising edge */
+//	EMIOS_0.CH[24].CADR.R=0xffff;
+//	/* (WORD)EMIOS_0.CH[15].CCNTR.R 数据寄存器 */
+//	SIU.PCR[60].R = 0x0500;	/* Initialize pad for eMIOS channel Initialize pad for input */
+//
+//	
+//	/* 方向部分 PC14 */
+//	SIU.PCR[46].R = 0x0100;
+//	/* SIU.GPDI[28].B.PDI 数据寄存器 */
+	//左
+	/* 计数部分 PE7 */
+	EMIOS_0.CH[23].CCR.B.MODE = 0x51;	/* Mode is MCB */
+	EMIOS_0.CH[23].CCR.B.BSL = 0x3;	/* Use internal counter */
+	EMIOS_0.CH[23].CCR.B.UCPRE=0;	/* Set channel prescaler to divide by 1 */
+	EMIOS_0.CH[23].CCR.B.UCPEN = 1;	/* Enable prescaler; uses default divide by 1 */
+	EMIOS_0.CH[23].CCR.B.FREN = 0;	/* Freeze channel counting when in debug mode */
+	EMIOS_0.CH[23].CCR.B.EDPOL=1;	/* Edge Select rising edge */
+	EMIOS_0.CH[23].CADR.R=0xffff;		/* (WORD)EMIOS_0.CH[15].CCNTR.R 数据寄存器 */
+	SIU.PCR[71].R = 0x0500;	/* Initialize pad for eMIOS channel Initialize pad for input */
 
-	
-	/* 方向部分 PC14 */
-	SIU.PCR[46].R = 0x0100;
+			
+	/* 方向部分 PE12 */
+	SIU.PCR[76].R = 0x0100;
 	/* SIU.GPDI[28].B.PDI 数据寄存器 */
 }
 
@@ -339,14 +354,18 @@ void init_all_and_POST(void)
 	init_serial_port_1();//Wifi_ouyang
 //	init_serial_port_2();//rfid_ouyang
 	init_serial_port_0();
+//	SIU.PCR[0].R=0x0100;
+	SIU.PCR[4].R=0x0100;
+	SIU.PCR[6].R=0x0100;
+	
 	//init_ADC();
 	//init_serial_port_3();
-	//init_supersonic_trigger_0();	
-	//init_supersonic_receive_0();
+//	init_supersonic_trigger_0();	
+//	init_supersonic_receive_0();
 //	init_supersonic_receive_1();
 //	init_supersonic_trigger_1();		
-    //init_supersonic_receive_2();
-	//init_supersonic_trigger_2();
+//    init_supersonic_receive_2();
+//	init_supersonic_trigger_2();
 //	init_supersonic_trigger_3();
 //	init_supersonic_receive_3();
 	init_optical_encoder();
@@ -373,6 +392,7 @@ void init_all_and_POST(void)
 	delay_ms(50);
 
 	g_device_NO=1;
+	g_device_NO_Hex=0x01;
 	update_steer_helm_basement_to_steer_helm();
 	LCD_P8x16Str(0, 0, (BYTE*)"StH.L=");
 	LCD_PrintoutInt(48, 0, data_steer_helm_basement.left_limit);

@@ -1,5 +1,6 @@
 ﻿#define __WIFI_C_
 #include "includes.h"
+#include "math.h"
 
 
 int g_remote_frame_state = REMOTE_FRAME_STATE_NOK;
@@ -45,11 +46,19 @@ int barrier_left_detected=0;
 int barrier_right_detected=0;
 int stuck1=0,stuck2=0;//1避障过程   2绕圈
 int barrier_offset=0;
-int light_offset=0;
+double light_offset=0;
 int yanshi=0;
 int count=0;
+int message_num1=0;
+int test_pid=0;
+int test_helm=0;
+unsigned long angle=0;
+int x,y,z=0;
+
 BYTE light_distance[4]={0,0,0,0};//收到WiFi距离记录
 BYTE light_angle[4]={0,0,0,0};//收到WiFi角度记录
+BYTE light_angle1[10]={0,0,0,0,0,0,0,0,0,0};//收到WiFi角度记录1
+BYTE light_distance1[10]={0,0,0,0,0,0,0,0,0,0};//收到WiFi距离记录1
 extern get_ss;
 
 short high8;
@@ -435,18 +444,23 @@ void Wifi_Ctrl()
 {
 	if(remote_frame_data[2]==0x55)//来自dby的电脑
 	{
+		
 		int m=change_hex_into_dec(remote_frame_data[7]);
 		int distance_delta1,angle_delta1,light_delta3=0;
-		WORD distance=(WORD)(remote_frame_data[8]);		
+		WORD distance=(WORD)(remote_frame_data[8]);	
+		int i=0;
+		int ave_dis=0,ave_lig=0,above_num=0;
+		
+
 //		light_delta1=ABS(light_distance[0]-light_distance[1]);
 //		light_delta2=ABS(light_distance[1]-light_distance[2]);		
-//		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x66)//右转
-//		{
-//			right_turn=1;
-//			high8=((WORD)(remote_frame_data[7])<<8);
-//			low8=(WORD)(remote_frame_data[8]);
-//			steer_rate=(high8|low8);
-//		}
+		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x66)//右转
+		{
+			right_turn=1;
+			high8=((WORD)(remote_frame_data[7])<<8);
+			low8=(WORD)(remote_frame_data[8]);
+			steer_rate=(high8|low8);
+		}
 //		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x77)//直走
 //		{
 //			straight_drive=1;
@@ -473,6 +487,7 @@ void Wifi_Ctrl()
 //		}
 		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x88)//变速
 		{
+			
 			speed_change=1;
 			high9=((WORD)(remote_frame_data[7])<<8);
 			low9=(WORD)(remote_frame_data[8]);
@@ -480,54 +495,125 @@ void Wifi_Ctrl()
 		}
 		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x11)//给角度zhaodeng
 		{
+			//double adj_rate=asin(0.5/distance)*256/360;
+			
+			
 			barrier_left_detected=0;
 			barrier_right_detected=0;
 			barrier_offset=0;
 			light_offset=0;
 			stuck1=0;
+			message_num1++;
 			
-			light_distance[0]=light_distance[1];light_distance[1]=light_distance[2];light_distance[2]=light_distance[3];
-			light_distance[3]=distance;
-			distance_delta1=ABS(light_distance[2]-light_distance[3]);
+//			light_distance[0]=light_distance[1];light_distance[1]=light_distance[2];light_distance[2]=light_distance[3];
+//			light_distance[3]=distance;
+//			distance_delta1=ABS(light_distance[2]-light_distance[3]);
 			
-			light_angle[0]=light_angle[1];light_angle[1]=light_angle[2];light_angle[2]=light_angle[3];
-			light_angle[3]=m;
-			angle_delta1=ABS(light_angle[2]-light_angle[3]);
-			velocity=225;
-			if(m>=0+3*light_offset&&m<42)
+			for(i=0;i<9;i++)
 			{
+				light_distance1[i]=light_distance1[i+1];
+				light_angle1[i]=light_angle1[i+1];
+				ave_dis+=light_distance1[i];
+				ave_lig+=light_angle1[i];
+			}
+			
+			light_distance1[9]=distance;
+			light_angle1[9]=m;
+			ave_dis=(ave_dis+light_distance1[9])/10;
+			ave_lig=(ave_lig+light_angle1[9])/10;
+			if(message_num1=10)
+			{
+				message_num1=0;				
+				for(i=0;i<10;i++)
+				{
+					if(ABS(ave_dis-light_distance1[i])<1&&ABS(ave_lig-light_angle1[i])<4)
+					{
+						above_num++;
+					}
+				}				
+			}
+			if(above_num>8)
+			{				
+				stuck2=20;
+			}
+			above_num=0;
+			
+			
+//			if(m>=0)
+//			{
+//					m=m-adj_rate;
+//			}
+//			else
+//			{
+//					m=m+adj_rate;
+//			}
+//			
+//			
+			angle=m;
+			
+			
+//			light_angle[0]=light_angle[1];light_angle[1]=light_angle[2];light_angle[2]=light_angle[3];
+//			light_angle[3]=m;
+//			angle_delta1=ABS(light_angle[2]-light_angle[3]);
+			if(m>=0&&m<64)
+			{
+
 				left_turn=1;
+				x=0;
+				y=0;
 			    //high8=(0x00<<8);
 			    steer_rate=m;
 			}
-			if(m<0&&m>=-42)
+			if(m<0&&m>=-64)
 			{
 				right_turn=1;
+				x=0;
+				y=0;
 				//high8=(0x00<<8);
 				steer_rate=-1*m;
 			}
-			if(m>=42&&m<=127)
+			if(m>=64&&m<=127-17*x||m>=-128*y&&m<-110*y)
 			{
 				left_turn=1;
+				y=1;
 //				high8=(0x00<<8);
 			 //   low8=(WORD)((WORD)(remote_frame_data[7]));
-				steer_rate=42;
+				if(m<0)
+				{
+					angle=127;
+				}
 			}
-			if(m>=-128&&m<-42)
+			if(m>=-128+y*18&&m<-64||m<=127*x&&m>110*x)
 			{
 				right_turn=1;
+				x=1;
 			//	high8=(0x00<<8);
 			//  low8=(WORD)((WORD)(remote_frame_data[7]));
-				steer_rate=42;
+				if(m>0)
+				{
+					angle=-128;
+				}
 			}
-			if(m>=-128&&m<=-86||m<=127&&m>=85)
-			{
-				yanshi=1;
-			}
-			if(distance<16&&distance>5)
-			{
-				light_offset=1;
-			}
+//			if(m>=-128&&m<=-86||m<=127*&&m>=85)
+//			{
+//				if(distance>10)
+//				{
+//					yanshi=1;
+//				}
+//				else
+//				{
+//					yanshi=2;
+//				}
+//				
+//			}
+//			if(distance<=7&&distance>5)
+//			{
+//				light_offset=0.3;
+//			}
+//			if(distance<=12&&distance>6)
+//			{
+//				light_offset=1;
+//			}
 //			if(remote_frame_data[7]>=0x40&&remote_frame_data[7]<0xC0)//如果信标不在车前半部分范围内时执行
 //			{
 //				car_turn_around=1;
@@ -536,25 +622,25 @@ void Wifi_Ctrl()
 //			{
 //				target_near=1;
 //			}
-			if(m>30&&m<-30&&distance<9)
+			if(distance<7)
 			{
 				target_access=1;
-				velocity=175;
+//				velocity=175;
 			}
-			if(distance_delta1<4&&angle_delta1<6)
-			{
-				stuck2++;
-			}
-			if(distance_delta1>=4||angle_delta1>=6)
-			{
-				count++;
-				//stuck2=0;
-			}
-			if(count>4)
-			{
-				count=0;
-				stuck2=0;
-			}
+//			if(distance_delta1<4&&angle_delta1<6)
+//			{
+//				stuck2++;
+//			}
+//			if(distance_delta1>=4||angle_delta1>=6)
+//			{
+//				count++;
+//				//stuck2=0;
+//			}
+//			if(count>4)
+//			{
+//				count=0;
+//				stuck2=0;
+//			}
 			
 			message_received=1;				
 		}		
@@ -565,6 +651,7 @@ void Wifi_Ctrl()
 		}
 		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x44)//避障
 		{
+			light_offset=0;
 			//if(m>0-10*barrier_offset&&m<30&&remote_frame_data[8]<0x78)
 			if(m>=0+3*barrier_offset)			
 			{
@@ -572,12 +659,13 @@ void Wifi_Ctrl()
 				barrier_offset=-1;
 				LCD_Write_Num(105,1,m,2);
 				LCD_Write_Num(105,2,barrier_offset,2);
-				velocity=175;
+				//velocity=175;
 				//low8=120-(WORD)(remote_frame_data[8]);
 				if(m>=-25&&m<=25)
 				{
 					angle_rate=60;
-				}				
+				}
+				angle=-64;
 //					
 //				if(angle_rate>60)
 //				{
@@ -597,6 +685,7 @@ void Wifi_Ctrl()
 				{
 				   angle_rate=60;
 				}
+				angle=64;
 			}
 //			if(remote_frame_data[8]<0x50)
 //			{
@@ -627,7 +716,21 @@ void Wifi_Ctrl()
 //				}
 //			}
 //		}
-		
+		if(remote_frame_data[5]==0xAA)//测试pid
+		{
+//			remote_frame_data[6]=remote_frame_data[6]/10;
+//			remote_frame_data[7]=remote_frame_data[7]/10;
+//			remote_frame_data[8]=remote_frame_data[8]/10;
+			set_speed_KP((float)(remote_frame_data[7]/10));
+			set_speed_KI((float)(remote_frame_data[8]/10));
+			//set_speed_KD((WORD)(remote_frame_data[8]));
+			test_pid=1;
+			
+		}
+		if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0xBB)//避障
+		{
+			stuck2=1;
+		}
 	}
 	//if(remote_frame_data[2]==0x02)//来自dby的自制上位机
 	//{
@@ -646,6 +749,17 @@ void Wifi_Ctrl()
 	//}
 
 
+}
+void Wifi_Test(void)
+{
+	if(remote_frame_data[5]==0x00 && remote_frame_data[6]==0x66)//右转
+	{
+		test_helm=1;
+		high8=((WORD)(remote_frame_data[7])<<8);
+		low8=(WORD)(remote_frame_data[8]);
+		steer_rate=(high8|low8);
+	}
+	
 }
 
 

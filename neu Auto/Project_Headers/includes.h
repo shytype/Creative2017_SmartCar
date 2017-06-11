@@ -83,5 +83,10 @@ typedef unsigned short word;
 #define switch3 SIU.GPDI[55].R//PD7
 #define switch4 SIU.GPDI[56].R//PD8右
 
+///****************碰撞开关****************///
+//#define collision_switch1 SIU.GPDI[0].R
+#define collision_switch1 SIU.GPDI[6].R
+#define collision_switch2 SIU.GPDI[4].R
+
 
 #endif

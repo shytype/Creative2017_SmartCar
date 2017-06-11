@@ -37,8 +37,20 @@ void Mode3_Andriod(void);
 void main(void)
 	{
 	init_all_and_POST();
-//	set_steer_helm_basement(data_steer_helm_basement.left_limit);
-////	set_speed_pwm(300);
+//	for(;;)
+//	{
+//		if(collision_switch1)
+//		{
+//			D5=1;
+//			D6=0;
+//		}
+//		else
+//		{
+//			D5=0;D6=1;
+//		}
+//	}
+//	set_steer_helm_basement(3248);
+//	set_speed_pwm(500);
 //	delay_ms(5000);
 //	set_steer_helm_basement(data_steer_helm_basement.right_limit);
 //	delay_ms(5000);
@@ -52,6 +64,10 @@ void main(void)
 //	sending_service_package(0x55,0x0069,0x01F4);
 	if(mode==0)
 		Mode0_DebugCamera();//图像显示屏显示，车速20，显示offset RoadType，舵机打角，wifi_car_action不激活
+	else if(mode==1)
+		Mode1_SendVideo();
+	else
+			Mode3_Andriod();//远程模式，上位机遥控车
 }
 void Mode0_DebugCamera(void)
 {
@@ -86,3 +102,31 @@ void Mode0_DebugCamera(void)
 	}
 //#endif
 }
+void Mode1_SendVideo(void)
+{
+	g_f_enable_speed_control=1;
+	for (;;)
+	{
+		if (REMOTE_FRAME_STATE_OK == g_remote_frame_state)
+		{
+			g_remote_frame_state = REMOTE_FRAME_STATE_NOK;
+			Wifi_Ctrl();
+			first_received=1;			
+		}	
+			control_car_action_stable();			// 全场动作控制
+	}
+}
+void Mode3_Andriod(void)
+{
+	g_f_enable_speed_control=0;
+	for (;;)
+	{
+	   if (REMOTE_FRAME_STATE_OK == g_remote_frame_state)
+	   {
+			g_remote_frame_state = REMOTE_FRAME_STATE_NOK;
+			Wifi_Test();			
+		}
+		control_car_action();			// 全场动作控制	
+	}
+}
+

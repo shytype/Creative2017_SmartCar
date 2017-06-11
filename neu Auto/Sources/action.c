@@ -57,13 +57,16 @@ extern int barrier_right_detected;
 extern int stuck1,stuck2;
 extern int delay_count;
 extern int barrier_offset;
-extern int light_offset;
+extern int test_pid;
+extern int test_helm;
+extern double light_offset;
 extern int yanshi;
 extern int count;
+extern long angle;
 extern short steer_rate;
 extern short speed_number;
 extern short angle_rate;
-int dasspeed=150;//识别时速度原pwm300，李秋键更改
+int dasspeed=300;//识别时速度原pwm300，李秋键更改
 int last1,last2,last3,last4,last5=0;
 
 /*------------------------------*/
@@ -170,7 +173,8 @@ void WiFi_control_car_4_action(WORD cmd)
 /*-----------------------------------------------------------------------*/
 void control_car_action(void)
 {
-	velocity=225;	
+	velocity=300;	
+	D5=1;
 	if(speed_change==1)//修改速度
 	{
 		speed_change=0;
@@ -196,56 +200,77 @@ void control_car_action(void)
 		   left_turn=1;
 		}
 	}
-		if(right_turn==1)//右转 找灯
+		if(test_helm==1)//调中值
         {
-        	right_turn=0;
-        	last1=1;
-        	LCD_Write_Num(105,1,1,2);
-        	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*steer_rate/42+light_offset*75);
+			test_helm=0;
+        	//set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*steer_rate/42+light_offset*75);       	
+        	//set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*steer_rate/42.0);
+        	set_steer_helm_basement(steer_rate);
         	if(yanshi==1)
         	{
         	   yanshi=0;
         	   delay_ms(1000);
         	}
-        	//set_speed_pwm(dasspeed);
-        	set_speed_target(velocity);
+        	set_speed_pwm(dasspeed);
+        	delay_ms(3000);
+        	set_speed_pwm(0);
+        	//set_speed_target(velocity);
         	
         }
-
-//        if(stuck1>100||stuck2>50)//倒车
+//
+////        if(stuck1>100||stuck2>50)//倒车
+////        {
+////        	stuck1=0;
+////        	stuck2=0;
+////        	//last5=1;
+////        	set_steer_helm_basement(data_steer_helm_basement.center);
+////        	set_speed_target(-200);
+////        	delay_ms(1500);
+////        	set_speed_target(200);
+////        }
+//        if(car_stop==1)//停车
 //        {
-//        	stuck1=0;
-//        	stuck2=0;
-//        	//last5=1;
-//        	set_steer_helm_basement(data_steer_helm_basement.center);
-//        	set_speed_target(-200);
-//        	delay_ms(1500);
-//        	set_speed_target(200);
+//        	car_stop=0;
+//        	last3=1;
+//        	LCD_Write_Num(105,1,3,2);
+//            set_steer_helm_basement(data_steer_helm_basement.center);
+//            set_speed_target(0);	
 //        }
-        if(car_stop==1)//停车
-        {
-        	car_stop=0;
-        	last3=1;
-        	LCD_Write_Num(105,1,3,2);
-            set_steer_helm_basement(data_steer_helm_basement.center);
-            set_speed_target(0);	
-        }
-
-        if(left_turn==1)//左转 包括避障和找灯
-        {
-            left_turn=0;
-            last4=1;
-            LCD_Write_Num(105,1,4,2);
-            set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center-light_offset*75);
-            if(yanshi==1)
-            {
-                yanshi=0;
-            	delay_ms(1000);
-            }
-            //set_speed_pwm(dasspeed);
-            set_speed_target(velocity);	
-        }
-
+//
+//        if(left_turn==1)//左转 包括避障和找灯
+//        {
+//            left_turn=0;
+//            last4=1;
+//            LCD_Write_Num(105,1,4,2);
+//            set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center-light_offset*75);
+//            //set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*steer_rate/42.0+data_steer_helm_basement.center);
+//            if(yanshi==1)
+//            {
+//                yanshi=0;
+//            	delay_ms(1000);
+//            }
+//            //set_speed_pwm(dasspeed);
+//            set_speed_target(velocity);	
+//        }
+//
+	    if(left_turn==1||right_turn==1)
+	    {
+	    	left_turn=0;
+	    	right_turn=0;
+	    	SteerControl();	    	
+	    	//set_speed_pwm(700);
+	    	set_speed_target(velocity);
+	    	if(yanshi==1)
+	    	{
+	    	   yanshi=0;
+	    	   delay_ms(600);
+	    	}
+	    	else if(yanshi==2)
+	    	{
+	    		yanshi=0;
+	    		delay_ms(200);
+	    	}
+	    }
         if(message_received==1)//收到找灯命令 丢失置零
         {
         	message_received=0;
@@ -261,41 +286,49 @@ void control_car_action(void)
 //          set_speed_target(-150);
         	set_steer_helm_basement(data_steer_helm_basement.center);
         	set_speed_target(velocity);
+        	//set_speed_pwm(0);
             delay_ms(2000);
         	
         }
         if(barrier_left_detected)//左边有障碍
         {
-        	velocity=170;
+        	velocity=175;
         	barrier_left_detected=0;
-        	set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*angle_rate/60-150);
+        	//set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*angle_rate/60-150);
         	//set_steer_helm_basement(3600);
+        	//set_steer_helm_basement(data_steer_helm_basement.right_limit);
+        	SteerControl();	
         	LCD_Write_Num(105,1,5,2);
-        	//set_speed_pwm(dasspeed);
+        	//set_speed_pwm(350);
         	set_speed_target(velocity);
-        	delay_ms(50);
         	//delay_ms(50);
+        	delay_ms(100);
         }
         if(barrier_right_detected)//右边有障碍
         {
-        	velocity=170;
+        	velocity=175;
         	barrier_right_detected=0;
-        	set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*angle_rate/60+data_steer_helm_basement.center+150);
+        	//set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*angle_rate/60+data_steer_helm_basement.center+150);
         	//set_steer_helm_basement(3000);
+        	//set_steer_helm_basement(data_steer_helm_basement.left_limit);
+        	SteerControl();	
         	LCD_Write_Num(105,1,6,2);
-        	//set_speed_pwm(dasspeed);
-        	delay_ms(50);
+        	//set_speed_pwm(350);
+        	//delay_ms(50);
         	set_speed_target(velocity);
-            //delay_ms(50);
+            delay_ms(100);
         }
-        if(stuck2>15)
+        if(stuck2==1||!collision_switch1)
         {
         	//stuck1=0;
         	stuck2=0;
         	count=0;
+        	D5=0;
         	set_steer_helm_basement(data_steer_helm_basement.center );
-        	set_speed_target(-150);
-        	delay_ms(1000);
+        	set_speed_target(-200);
+        	//set_speed_pwm(-400);
+        	delay_ms(700);
+        	set_speed_target(0);
         }
 //        if(car_turn_around==1)//调头
 //        {
@@ -305,7 +338,8 @@ void control_car_action(void)
         if(target_access)
         {
         	target_access=0;
-        	velocity=170;
+        	velocity=250;
+        	set_speed_target(velocity);
         }        
 //        if(straight_drive==1)//直行
 //        {
@@ -316,6 +350,214 @@ void control_car_action(void)
 //        	//set_speed_pwm(dasspeed);	
 //        	set_speed_target(velocity);	
 //       }
+//        if(test_pid==1)
+//        {
+//        	test_pid=0;
+//        	set_steer_helm_basement(data_steer_helm_basement.center);
+//        	set_speed_target(275);
+//        	delay_ms(5000);
+//        	//set_steer_helm_basement(data_steer_helm_basement.left_limit);
+//        	//set_speed_target(100);
+//        	//delay_ms(5000);
+//        	set_steer_helm_basement(data_steer_helm_basement.center);
+//        	set_speed_target(-275);
+//        	delay_ms(5000);
+//        	set_speed_target(0);
+//        }
+}
+void control_car_action_stable(void)
+{
+	velocity=300;	
+	D5=1;
+	if(speed_change==1)//修改速度
+	{
+		speed_change=0;
+		velocity=speed_number;
+		if(last1==1)
+		{
+		   last1=0;
+		   right_turn=1;
+		}
+		else if(last2==1)
+		{
+		   last2=0;
+		   straight_drive=1;
+		}
+		else if(last3==1)
+		{
+		   last3=0;
+		   car_stop=1;
+		}
+		else if(last4==1)
+		{
+		   last4=0;
+		   left_turn=1;
+		}
+	}
+		if(test_helm==1)//调中值
+        {
+			test_helm=0;
+        	//set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*steer_rate/42+light_offset*75);       	
+        	//set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*steer_rate/42.0);
+        	set_steer_helm_basement(steer_rate);
+        	if(yanshi==1)
+        	{
+        	   yanshi=0;
+        	   delay_ms(1000);
+        	}
+        	set_speed_pwm(dasspeed);
+        	delay_ms(3000);
+        	set_speed_pwm(0);
+        	//set_speed_target(velocity);
+        	
+        }
+//
+////        if(stuck1>100||stuck2>50)//倒车
+////        {
+////        	stuck1=0;
+////        	stuck2=0;
+////        	//last5=1;
+////        	set_steer_helm_basement(data_steer_helm_basement.center);
+////        	set_speed_target(-200);
+////        	delay_ms(1500);
+////        	set_speed_target(200);
+////        }
+//        if(car_stop==1)//停车
+//        {
+//        	car_stop=0;
+//        	last3=1;
+//        	LCD_Write_Num(105,1,3,2);
+//            set_steer_helm_basement(data_steer_helm_basement.center);
+//            set_speed_target(0);	
+//        }
+//
+//        if(left_turn==1)//左转 包括避障和找灯
+//        {
+//            left_turn=0;
+//            last4=1;
+//            LCD_Write_Num(105,1,4,2);
+//            set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*steer_rate/42+data_steer_helm_basement.center-light_offset*75);
+//            //set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*steer_rate/42.0+data_steer_helm_basement.center);
+//            if(yanshi==1)
+//            {
+//                yanshi=0;
+//            	delay_ms(1000);
+//            }
+//            //set_speed_pwm(dasspeed);
+//            set_speed_target(velocity);	
+//        }
+//
+	    if(left_turn==1||right_turn==1)
+	    {
+	    	left_turn=0;
+	    	right_turn=0;
+	    	SteerControl();	    	
+	    	//set_speed_pwm(700);
+	    	set_speed_target(velocity);
+	    	if(yanshi==1)
+	    	{
+	    	   yanshi=0;
+	    	   delay_ms(600);
+	    	}
+	    	else if(yanshi==2)
+	    	{
+	    		yanshi=0;
+	    		delay_ms(200);
+	    	}
+	    }
+        if(message_received==1)//收到找灯命令 丢失置零
+        {
+        	message_received=0;
+        	target_lost=0;
+        }
+        if(target_lost > 35)//丢失
+        {
+        	target_lost=0;
+        	velocity=0;
+//        	set_steer_helm_basement(data_steer_helm_basement.right_limit);
+//        	set_speed_target(150);
+//        	set_steer_helm_basement(3050);
+//          set_speed_target(-150);
+        	set_steer_helm_basement(data_steer_helm_basement.center);
+        	set_speed_target(velocity);
+        	//set_speed_pwm(0);
+            delay_ms(2000);
+        	
+        }
+        if(barrier_left_detected)//左边有障碍
+        {
+        	velocity=175;
+        	barrier_left_detected=0;
+        	//set_steer_helm_basement(data_steer_helm_basement.center-(data_steer_helm_basement.center-data_steer_helm_basement.right_limit)*angle_rate/60-150);
+        	//set_steer_helm_basement(3600);
+        	//set_steer_helm_basement(data_steer_helm_basement.right_limit);
+        	SteerControl();	
+        	LCD_Write_Num(105,1,5,2);
+        	//set_speed_pwm(350);
+        	set_speed_target(velocity);
+        	//delay_ms(50);
+        	delay_ms(100);
+        }
+        if(barrier_right_detected)//右边有障碍
+        {
+        	velocity=175;
+        	barrier_right_detected=0;
+        	//set_steer_helm_basement((data_steer_helm_basement.left_limit-data_steer_helm_basement.center)*angle_rate/60+data_steer_helm_basement.center+150);
+        	//set_steer_helm_basement(3000);
+        	//set_steer_helm_basement(data_steer_helm_basement.left_limit);
+        	SteerControl();	
+        	LCD_Write_Num(105,1,6,2);
+        	//set_speed_pwm(350);
+        	//delay_ms(50);
+        	set_speed_target(velocity);
+            delay_ms(100);
+        }
+        if(stuck2==1||!collision_switch1)
+        {
+        	//stuck1=0;
+        	stuck2=0;
+        	count=0;
+        	D5=0;
+        	set_steer_helm_basement(data_steer_helm_basement.center );
+        	set_speed_target(-200);
+        	//set_speed_pwm(-400);
+        	delay_ms(700);
+        	set_speed_target(0);
+        }
+//        if(car_turn_around==1)//调头
+//        {
+//        	car_turn_around=0;
+//        	Car_UTurn();//函数定义在action.c
+//        }  
+        if(target_access)
+        {
+        	target_access=0;
+        	velocity=250;
+        	set_speed_target(velocity);
+        }        
+//        if(straight_drive==1)//直行
+//        {
+//        	straight_drive=0;
+//        	last2=1;
+//        	LCD_Write_Num(105,1,2,2);
+//        	set_steer_helm_basement(data_steer_helm_basement.center);
+//        	//set_speed_pwm(dasspeed);	
+//        	set_speed_target(velocity);	
+//       }
+//        if(test_pid==1)
+//        {
+//        	test_pid=0;
+//        	set_steer_helm_basement(data_steer_helm_basement.center);
+//        	set_speed_target(275);
+//        	delay_ms(5000);
+//        	//set_steer_helm_basement(data_steer_helm_basement.left_limit);
+//        	//set_speed_target(100);
+//        	//delay_ms(5000);
+//        	set_steer_helm_basement(data_steer_helm_basement.center);
+//        	set_speed_target(-275);
+//        	delay_ms(5000);
+//        	set_speed_target(0);
+//        }
 }
 void device_Num_change(void)//把设备号换成16进制（好像没啥用）
 {
